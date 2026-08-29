@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://enhpbdwcnoetawiwadld.supabase.co").trim();
+const RAW_SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://enhpbdwcnoetawiwadld.supabase.co";
+const SUPABASE_URL = /^https?:\/\//i.test(RAW_SUPABASE_URL.trim()) ? RAW_SUPABASE_URL.trim().replace(/\/$/, "") : `https://${RAW_SUPABASE_URL.trim().replace(/\/$/, "")}`;
 const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim().replace(/\s+/g, "");
 
 const allowed = new Set(["app_login","app_register","app_logout","app_state","app_calendar","app_create_task","app_submit_task","app_review_task","app_create_question","app_add_comment","app_send_message","app_mark_notifications_read","app_upload_file","app_get_file","app_ai_history","app_ai_save"]);
