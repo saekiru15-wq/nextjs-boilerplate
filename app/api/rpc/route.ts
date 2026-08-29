@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://enhpbdwcnoetawiwadld.supabase.co";
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_5gHrPhRHnXLbHVZG0JPgEA_16_3HYIj";
+const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://enhpbdwcnoetawiwadld.supabase.co").trim();
+const SUPABASE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim().replace(/\s+/g, "");
 
-const allowed = new Set([
-  "app_login", "app_register", "app_logout", "app_state", "app_calendar",
-  "app_create_task", "app_submit_task", "app_review_task", "app_create_question",
-  "app_add_comment", "app_send_message", "app_mark_notifications_read",
-  "app_upload_file", "app_get_file", "app_ai_history", "app_ai_save",
-]);
+const allowed = new Set(["app_login","app_register","app_logout","app_state","app_calendar","app_create_task","app_submit_task","app_review_task","app_create_question","app_add_comment","app_send_message","app_mark_notifications_read","app_upload_file","app_get_file","app_ai_history","app_ai_save"]);
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,8 +16,7 @@ export async function POST(request: NextRequest) {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
       method: "POST",
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      cache: "no-store",
+      body: JSON.stringify(body), cache: "no-store",
     });
     const text = await response.text();
     let data: unknown = text;
@@ -41,14 +35,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "서버 요청 중 오류가 발생했습니다." }, { status: 500 });
   }
 }
-
 function extractToken(value: unknown): string | null {
   if (!value) return null;
   if (Array.isArray(value)) return extractToken(value[0]);
   if (typeof value === "object") {
     const v = value as Record<string, unknown>;
-    for (const key of ["token", "session_token", "p_token"]) if (typeof v[key] === "string") return v[key] as string;
-    for (const key of ["data", "result", "user"]) { const t = extractToken(v[key]); if (t) return t; }
+    for (const key of ["token","session_token","p_token"]) if (typeof v[key] === "string") return v[key] as string;
+    for (const key of ["data","result","user"]) { const t = extractToken(v[key]); if (t) return t; }
   }
   return null;
 }
