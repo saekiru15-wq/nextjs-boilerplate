@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://enhpbdwcnoetawiwadld.supabase.co";
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://enhpbdwcnoetawiwadld.supabase.co";
+// Prefer the server-only key. The publishable key is a safe fallback for this small app
+// if Vercel does not inject the server environment variable into the deployment.
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "sb_publishable_5gHrPhRHnXLbHVZG0JPgEA_16_3HYIj";
 
 const allowed = new Set([
   "app_login", "app_register", "app_logout", "app_state", "app_calendar",
