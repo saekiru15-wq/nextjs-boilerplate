@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://enhpbdwcnoetawiwadld.supabase.co";
-// Prefer the server-only key. The publishable key is a safe fallback for this small app
-// if Vercel does not inject the server environment variable into the deployment.
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "sb_publishable_5gHrPhRHnXLbHVZG0JPgEA_16_3HYIj";
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_5gHrPhRHnXLbHVZG0JPgEA_16_3HYIj";
 
 const allowed = new Set([
   "app_login", "app_register", "app_logout", "app_state", "app_calendar",
@@ -13,39 +11,35 @@ const allowed = new Set([
 ]);
 
 export async function POST(request: NextRequest) {
-  if (!SUPABASE_KEY) {
-    return NextResponse.json({ error: "Supabase server environment variables are not configured." }, { status: 500 });
+  try {
+    if (!SUPABASE_KEY) return NextResponse.json({ error: "Supabase server environment variables are not configured." }, { status: 500 });
+    const { fn, args = {} } = await request.json();
+    if (!allowed.has(fn)) return NextResponse.json({ error: "Unsupported RPC." }, { status: 400 });
+    const cookieToken = request.cookies.get("mentor_token")?.value;
+    const body = { ...args };
+    if (cookieToken && !body.p_token) body.p_token = cookieToken;
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+    const text = await response.text();
+    let data: unknown = text;
+    try { data = JSON.parse(text); } catch {}
+    if (!response.ok) {
+      const detail = typeof data === "object" && data !== null ? data as Record<string, unknown> : {};
+      return NextResponse.json({ error: detail.message || detail.error || detail.hint || text || `Supabase RPC failed (${response.status})`, code: detail.code, details: detail.details }, { status: response.status });
+    }
+    const out = NextResponse.json(data);
+    if (fn === "app_login" || fn === "app_register") {
+      const token = extractToken(data);
+      if (token) out.cookies.set("mentor_token", token, { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 60 * 60 * 24 * 30 });
+    }
+    return out;
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "서버 요청 중 오류가 발생했습니다." }, { status: 500 });
   }
-
-  const { fn, args = {}, remember = false } = await request.json();
-  if (!allowed.has(fn)) return NextResponse.json({ error: "Unsupported RPC." }, { status: 400 });
-
-  const cookieToken = request.cookies.get("mentor_token")?.value;
-  const body = { ...args };
-  if (cookieToken && !body.p_token) body.p_token = cookieToken;
-
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
-    method: "POST",
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
-
-  const text = await response.text();
-  let data: unknown = text;
-  try { data = JSON.parse(text); } catch {}
-
-  const out = NextResponse.json(data, { status: response.status });
-  if (fn === "app_login" && response.ok) {
-    const token = extractToken(data);
-    if (token) out.cookies.set("mentor_token", token, { httpOnly: true, sameSite: "lax", secure: true, path: "/", maxAge: 60 * 60 * 24 * 30 });
-  }
-  if (fn === "app_logout" && response.ok) out.cookies.set("mentor_token", "", { httpOnly: true, expires: new Date(0), path: "/" });
-  return out;
 }
 
 function extractToken(value: unknown): string | null {
