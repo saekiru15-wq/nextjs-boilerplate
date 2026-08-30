@@ -10,9 +10,9 @@ s=s.replace(/const fb=window\.prompt\(st==="완료"\?"완료 피드백\(선택\)
 s=s.replace(/if\(window\.confirm\(([^)]*)\)\)\{/g,'if(await showConfirm("삭제 확인",$1)){');
 s=s.replace(/if\(!window\.confirm\(([^)]*)\)\)return;/g,'if(!(await showConfirm("삭제 확인",$1)))return;');
 // Keep the CreatedTaskList contract consistent with the owner-controls patch.
+s=s.replace('<CreatedTaskList tasks={createdTasks} users={users} refresh={refresh}/>','<CreatedTaskList tasks={createdTasks} users={users} refresh={refresh} me={me}/>');
 s=s.replace('<CreatedTaskList tasks={createdTasks} users={users}/>','<CreatedTaskList tasks={createdTasks} users={users} refresh={refresh} me={me}/>');
 const promptCount=(s.match(/window\.prompt\(/g)||[]).length;
 const confirmCount=(s.match(/window\.confirm\(/g)||[]).length;
 console.log(`[modal-check] remaining browser prompt=${promptCount}, confirm=${confirmCount}`);
-if(confirmCount){const ctx=s.match(/.{0,180}window\.confirm\(.{0,260}/g)||[];console.log('[modal-check] confirm context:',ctx.join('\n---\n'));}
 fs.writeFileSync(f,s);
