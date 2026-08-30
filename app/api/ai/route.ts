@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const key = process.env.OPENAI_API_KEY;
+    const key = (process.env.OPENAI_API_KEY || "").replace(/[\s\r\n\t]/g, "");
     if (!key) return NextResponse.json({ error: "OPENAI_API_KEY is not configured in Vercel." }, { status: 500 });
     const { message, history = [] } = await request.json();
     if (!message || typeof message !== "string") return NextResponse.json({ error: "message is required" }, { status: 400 });
