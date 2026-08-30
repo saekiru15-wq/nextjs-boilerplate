@@ -27,4 +27,3 @@ const upcoming = `function UpcomingTasks({tasks,users,me}:{tasks:any[];users:any
 if (!s.includes('function UpcomingTasks')) s = s.replace('function Stat(', upcoming+'function Stat(');
 
 fs.writeFileSync(file, s);
-`
