@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/patch-page.cjs && node scripts/patch-attachments.cjs && node scripts/patch-account.cjs && node scripts/patch-submissions.cjs && node scripts/patch-comments.cjs && node scripts/patch-edit-delete.cjs && node scripts/patch-owner-controls.cjs && node scripts/patch-final2.cjs && next build",
+    "build": "node scripts/patch-page.cjs && node scripts/patch-attachments.cjs && node scripts/patch-account.cjs && node scripts/patch-submissions.cjs && node scripts/patch-comments.cjs && node scripts/patch-edit-delete.cjs && node scripts/patch-owner-controls.cjs && node scripts/patch-final3.cjs && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -20,7 +20,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "tailwindcss": "^4"
   }
 }
