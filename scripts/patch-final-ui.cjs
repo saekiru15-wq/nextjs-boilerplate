@@ -2,13 +2,9 @@ const fs=require('fs'),path=require('path');
 const f=path.join(process.cwd(),'app','page.tsx');
 let s=fs.readFileSync(f,'utf8');
 
-// Mobile navigation state.
-if(!s.includes('[mobileMenu,setMobileMenu]')){
-  s=s.replace(/const\[active,setActive\]=useState\(MENU\[0\]\),/, 'const[active,setActive]=useState(MENU[0]),[mobileMenu,setMobileMenu]=useState(false),');
-}
-// AI model state, defaulting to the lightweight Gemini model.
-if(!s.includes('[aiModel,setAiModel]')){
-  s=s.replace(/const\[aiText,setAiText\]=useState\(""\),\[aiMessages,setAiMessages\]=useState<\{role:string;content:string\}\>\(\[\]\),/, 'const[aiText,setAiText]=useState(""),[aiMessages,setAiMessages]=useState<{role:string;content:string}[]>([]),[aiModel,setAiModel]=useState("gemini-2.5-flash-lite"),');
+// Inject UI state inside the component so it survives all earlier build-time patches.
+if(!s.includes('const[aiModel,setAiModel]=useState("gemini-2.5-flash-lite")')){
+  s=s.replace('export default function Home(){','export default function Home(){\n const[mobileMenu,setMobileMenu]=useState(false),[aiModel,setAiModel]=useState("gemini-2.5-flash-lite");');
 }
 s=s.replace('body:JSON.stringify({message:text,history})','body:JSON.stringify({message:text,history,model:aiModel})');
 
@@ -18,7 +14,7 @@ s=s.replace('const[qSubject,setQSubject]=useState(SUBJECTS[0])','const[qSubject,
 s=s.replace('<select value={qSubject} onChange={e=>setQSubject(e.target.value)}>{SUBJECTS.map','<select value={qSubject} onChange={e=>setQSubject(e.target.value)}>{QUESTION_SUBJECTS.map');
 s=s.replace('{q.subject||"전체"}','{q.subject==="국어&과학"?"과학":q.subject||"전체"}');
 
-// AI Light/Pro selector. Light is always the default.
+// AI Light/Pro selector. Light is the default.
 if(!s.includes('className="ai-model-switch"')){
   s=s.replace('<div className="content">{error&&','<div className="content">{active==="🤖 AI 학습도우미"&&<div className="ai-model-switch"><span>AI 모드</span><button type="button" className={aiModel==="gemini-2.5-flash-lite"?"active":""} onClick={()=>setAiModel("gemini-2.5-flash-lite")}>Light</button><button type="button" className={aiModel==="gemini-2.5-pro"?"active":""} onClick={()=>setAiModel("gemini-2.5-pro")}>Pro</button><small>{aiModel==="gemini-2.5-pro"?"복잡한 추론에 더 강한 Pro":"빠르고 가벼운 Light"}</small></div>}{error&&');
 }
@@ -28,7 +24,7 @@ s=s.replace('<aside className="sidebar">','<aside className={"sidebar "+(mobileM
 s=s.replace('onClick={()=>setActive(m)}>{m}</button>','onClick={()=>{setActive(m);setMobileMenu(false)}}>{m}</button>');
 s=s.replace('<main className="main"><header className="topbar"><h1>{active}</h1>','<main className="main"><header className="topbar"><button className="hamburger" type="button" aria-label="메뉴" onClick={()=>setMobileMenu(v=>!v)}>☰</button><h1>{active}</h1>');
 
-// Calendar detail gets a submit button and close button.
+// Calendar detail gets submit and close buttons.
 s=s.replace('function Calendar({month,setMonth,events,users}:{month:Date;setMonth:(d:Date)=>void;events:any[];users:any[]})','function Calendar({month,setMonth,events,users,setActive}:{month:Date;setMonth:(d:Date)=>void;events:any[];users:any[];setActive:(m:string)=>void})');
 s=s.replace('<button className="primary" onClick={()=>setSelected(null)}>닫기</button>','<div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:18}}><button className="outline" onClick={()=>setSelected(null)}>닫기</button><button className="primary" onClick={()=>{setActive("📥 숙제 제출");setSelected(null)}}>제출하기</button></div>');
 s=s.replace('<Calendar month={month} setMonth={setMonth} events={calendar} users={users}/>','<Calendar month={month} setMonth={setMonth} events={calendar} users={users} setActive={setActive}/>');
@@ -39,7 +35,6 @@ s=s.replace("else if(v.multiple&&v.tagName==='SELECT'){out[k]=Array.from(v.selec
 s=s.replace("vals[x.key]=el});","if(x.type==='multiselect')el.dataset.multiselect='1';vals[x.key]=el});");
 fs.writeFileSync(f,s);
 
-// Mobile/auth/AI selector styling.
 const cssFile=path.join(process.cwd(),'app','globals.css');
 let css=fs.readFileSync(cssFile,'utf8');
 const mobileCss=`
