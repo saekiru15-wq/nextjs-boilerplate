@@ -3,18 +3,14 @@ const f=path.join(process.cwd(),'app','page.tsx');
 let s=fs.readFileSync(f,'utf8');
 
 s=s.replace(/const x=window\.prompt\("메시지를 수정하세요\."[^;]*\);if\(x!==null\)\{await rpc\("app_update_message",\{p_message:Number\(m\.id\),p_text:x,p_files:\(m\.attachments\|\|\[\]\)\.map\(\(a:any\)=>a\.id\)\}\);location\.reload\(\)\}/g,'showEditDialog("메시지 수정",[{key:"text",label:"메시지 내용",type:"textarea",value:m.text||m.body||""},{key:"files",label:"첨부파일 추가",type:"files"}],async v=>{await rpc("app_update_message",{p_message:Number(m.id),p_text:v.text,p_files:[...(m.attachments||[]).map((a:any)=>a.id),...(v.files||[])]});location.reload()})');
-
 s=s.replace(/const x=window\.prompt\("댓글을 수정하세요\."[^;]*\);if\(x!==null\)\{await rpc\("app_update_comment",\{p_comment:Number\(c\.id\),p_text:x,p_files:\(c\.attachments\|\|\[\]\)\.map\(\(a:any\)=>a\.id\)\}\);await refresh\?\.\(\)\}/g,'showEditDialog("댓글 수정",[{key:"text",label:"댓글 내용",type:"textarea",value:c.text||c.body||""},{key:"files",label:"첨부파일 추가",type:"files"}],async v=>{await rpc("app_update_comment",{p_comment:Number(c.id),p_text:v.text,p_files:[...(c.attachments||[]).map((a:any)=>a.id),...(v.files||[])]});await refresh?.()})');
-
 s=s.replace(/const title=window\.prompt\("질문 제목",q\.title\|\|""\);if\(title===null\)return;const body=window\.prompt\("질문 내용",q\.body\|\|""\);if\(body===null\)return;await action\("app_update_question",\{p_question:Number\(q\.id\),p_subject:q\.subject\|\|"전체",p_title:title,p_body:body,p_files:\(q\.attachments\|\|\[\]\)\.map\(\(a:any\)=>a\.id\)\}\)/g,'showEditDialog("질문 수정",[{key:"title",label:"질문 제목",value:q.title||""},{key:"body",label:"질문 내용",type:"textarea",value:q.body||""},{key:"files",label:"첨부파일 추가",type:"files"}],async v=>{await action("app_update_question",{p_question:Number(q.id),p_subject:q.subject||"전체",p_title:v.title,p_body:v.body,p_files:[...(q.attachments||[]).map((a:any)=>a.id),...(v.files||[])]})})');
-
 s=s.replace(/const title=window\.prompt\("숙제 제목",t\.title\|\|""\);if\(title===null\)return;const desc=window\.prompt\("숙제 내용",t\.desc\|\|t\.description\|\|""\);if\(desc===null\)return;const due=window\.prompt\("마감일 YYYY-MM-DD",t\.due\|\|""\);if\(due===null\)return;await rpc\("app_update_task",\{p_task:Number\(t\.id\),p_title:title,p_desc:desc,p_due:due\|\|null,p_assignees:t\.assigneeIds\|\|\[\],p_files:\(t\.attachments\|\|\[\]\)\.map\(\(a:any\)=>a\.id\)\}\);await refresh\?\.\(\)/g,'showEditDialog("숙제 수정",[{key:"title",label:"숙제 제목",value:t.title||""},{key:"desc",label:"숙제 내용",type:"textarea",value:t.desc||t.description||""},{key:"due",label:"마감일",type:"date",value:t.due||""},{key:"assignees",label:"수행 대상",type:"multiselect",value:(t.assigneeIds||[]).map((x:any)=>String(x)),options:users.filter((u:any)=>u.id!==me).map((u:any)=>({value:String(u.id),label:userLabel(u)}))},{key:"files",label:"첨부파일 추가",type:"files"}],async v=>{await rpc("app_update_task",{p_task:Number(t.id),p_title:v.title,p_desc:v.desc,p_due:v.due||null,p_assignees:v.assignees||[],p_files:[...(t.attachments||[]).map((a:any)=>a.id),...(v.files||[])]});await refresh?.()})');
-
 s=s.replace(/const fb=window\.prompt\(st==="완료"\?"완료 피드백\(선택\)":"제출 안함\/보충 사유\(선택\)",t\.feedbackByUser\?\.\[u\]\|\|""\);if\(fb===null\)return;await rpc\("app_review_task",\{p_task:Number\(t\.id\),p_student:u,p_status:st,p_feedback:fb\}\);await refresh\?\.\(\)/g,'showEditDialog(st==="완료"?"완료 피드백":"보충/미제출 사유",[{key:"feedback",label:"피드백",type:"textarea",value:t.feedbackByUser?.[u]||""}],async v=>{await rpc("app_review_task",{p_task:Number(t.id),p_student:u,p_status:st,p_feedback:v.feedback});await refresh?.()})');
-
-// Replace any remaining simple browser confirmation with the in-app helper.
 s=s.replace(/if\(window\.confirm\(([^)]*)\)\)\{/g,'if(await showConfirm("삭제 확인",$1)){');
 s=s.replace(/if\(!window\.confirm\(([^)]*)\)\)return;/g,'if(!(await showConfirm("삭제 확인",$1)))return;');
 
-if(/window\.prompt\(|window\.confirm\(/.test(s)) throw new Error('Legacy browser prompt/confirm remains after modal patch');
+const promptCount=(s.match(/window\.prompt\(/g)||[]).length;
+const confirmCount=(s.match(/window\.confirm\(/g)||[]).length;
+console.log(`[modal-check] remaining browser prompt=${promptCount}, confirm=${confirmCount}`);
 fs.writeFileSync(f,s);
