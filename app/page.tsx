@@ -1,143 +1,52 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Obj = Record<string, any>;
-const MENU = ["🏠 홈", "📝 숙제", "❓ 질문게시판", "📅 캘린더", "💬 개인채팅", "🤖 AI 학습도우미", "🔔 알림"];
+const MENU = ["🏠 홈", "📤 숙제 내기", "📥 숙제 제출", "❓ 질문게시판", "📅 캘린더", "💬 개인채팅", "🤖 AI 학습도우미", "🔔 알림"];
 const SUBJECTS = ["국어&과학", "수학", "사회", "영어&한국사", "국어"];
+const MAX_FILES = 5, MAX_FILE_SIZE = 10 * 1024 * 1024;
+async function rpc(fn:string,args:Obj={}){const r=await fetch("/api/rpc",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fn,args})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d?.message||d?.error||"요청에 실패했습니다.");return d}
+const arr=(v:any,keys:string[])=>{for(const k of keys)if(Array.isArray(v?.[k]))return v[k];return[]};
+const statusClass=(s:string)=>s==="완료"?"green":s==="보충 필요"?"yellow":s==="미완료"?"red":"gray";
+const userLabel=(u:any)=>u?`${u.name} (${u.id})`:"-";
+function validateFiles(files:File[]){if(files.length>MAX_FILES)throw new Error(`파일은 최대 ${MAX_FILES}개까지 첨부할 수 있습니다.`);for(const f of files)if(f.size>MAX_FILE_SIZE)throw new Error(`${f.name}: 파일당 10MB까지 첨부할 수 있습니다.`)}
+async function fileToBase64(file:File){const b=await file.arrayBuffer();let s="";const x=new Uint8Array(b);for(let i=0;i<x.length;i+=0x8000)s+=String.fromCharCode(...x.subarray(i,Math.min(i+0x8000,x.length)));return btoa(s)}
+async function uploadFiles(files:File[],progress?:(s:string)=>void){validateFiles(files);const ids:string[]=[];for(let i=0;i<files.length;i++){progress?.(`파일 업로드 중... ${i+1}/${files.length}`);ids.push(await rpc("app_upload_file",{p_name:files[i].name,p_mime:files[i].type||"application/octet-stream",p_data:await fileToBase64(files[i])}))}return ids}
 
-async function rpc(fn: string, args: Obj = {}) {
-  const r = await fetch("/api/rpc", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fn, args }) });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d?.message || d?.error || "요청에 실패했습니다.");
-  return d;
-}
-const arr = (v: any, keys: string[]) => { for (const k of keys) if (Array.isArray(v?.[k])) return v[k]; return []; };
-const statusClass = (s: string) => s === "완료" ? "green" : s === "보충 필요" ? "yellow" : s === "미완료" ? "red" : "gray";
-
-export default function Home() {
-  const [active, setActive] = useState(MENU[0]);
-  const [state, setState] = useState<Obj | null>(null);
-  const [auth, setAuth] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [register, setRegister] = useState(false);
-  const [id, setId] = useState(""); const [pw, setPw] = useState(""); const [name, setName] = useState("");
-  const [subject, setSubject] = useState(SUBJECTS[0]);
-  const [taskTitle, setTaskTitle] = useState(""); const [taskDesc, setTaskDesc] = useState(""); const [taskDue, setTaskDue] = useState(""); const [taskAssignees, setTaskAssignees] = useState<string[]>([]);
-  const [qSubject, setQSubject] = useState(SUBJECTS[0]); const [qTitle, setQTitle] = useState(""); const [qBody, setQBody] = useState("");
-  const [chatUser, setChatUser] = useState(""); const [chatText, setChatText] = useState("");
-  const [aiText, setAiText] = useState(""); const [aiMessages, setAiMessages] = useState<{ role: string; content: string }[]>([]); const [aiBusy, setAiBusy] = useState(false);
-  const [month, setMonth] = useState(new Date()); const [calendar, setCalendar] = useState<any[]>([]);
-
-  const toast = (msg: string) => {
-    setError(msg);
-    window.setTimeout(() => setError(v => v === msg ? "" : v), 3000);
-  };
-
-  async function refresh() {
-    try {
-      const s = await rpc("app_state");
-      setState(s); setAuth(true); setError("");
-    } catch (e: any) {
-      setAuth(false);
-      const msg = String(e?.message || "");
-      // Not logged in is normal on the login page; do not show a permanent warning.
-      if (msg && !/UNAUTHORIZED|로그인|token/i.test(msg)) toast(msg);
-    }
-  }
-
-  useEffect(() => { refresh(); }, []);
-  useEffect(() => {
-    if (!auth) return;
-    const from = new Date(month.getFullYear(), month.getMonth(), 1).toISOString().slice(0, 10);
-    const to = new Date(month.getFullYear(), month.getMonth() + 1, 0).toISOString().slice(0, 10);
-    rpc("app_calendar", { p_from: from, p_to: to }).then(d => setCalendar(Array.isArray(d) ? d : arr(d, ["events", "calendar", "data"]))).catch(() => setCalendar([]));
-  }, [auth, month]);
-
-  async function action(fn: string, args: Obj = {}) {
-    try { setBusy(true); setError(""); await rpc(fn, args); await refresh(); }
-    catch (e: any) { toast(e?.message || "작업에 실패했습니다."); }
-    finally { setBusy(false); }
-  }
-
-  async function submitAuth(e: FormEvent) {
-    e.preventDefault();
-    try {
-      setBusy(true); setError("");
-      if (register) await rpc("app_register", { p_id: id.trim(), p_name: name.trim(), p_pw: pw, p_subject: subject });
-      await rpc("app_login", { p_id: id.trim(), p_pw: pw });
-      await refresh();
-    } catch (e: any) { toast(e?.message || "로그인에 실패했습니다."); }
-    finally { setBusy(false); }
-  }
-
-  async function createTask(e: FormEvent) {
-    e.preventDefault();
-    if (!taskTitle.trim()) { toast("숙제 제목을 입력해주세요."); return; }
-    if (!taskAssignees.length) { toast("이 숙제의 수행 대상을 선택해주세요."); return; }
-    await action("app_create_task", { p_title: taskTitle.trim(), p_desc: taskDesc.trim(), p_subject: state?.subject || subject, p_due: taskDue || null, p_assignees: taskAssignees, p_files: [] });
-    setTaskTitle(""); setTaskDesc(""); setTaskDue(""); setTaskAssignees([]);
-  }
-
-  async function createQuestion() {
-    if (!qTitle.trim() || !qBody.trim()) { toast("질문 제목과 내용을 입력해주세요."); return; }
-    await action("app_create_question", { p_subject: qSubject, p_title: qTitle.trim(), p_body: qBody.trim(), p_files: [] });
-    setQTitle(""); setQBody("");
-  }
-
-  async function askAI(e: FormEvent) {
-    e.preventDefault(); if (!aiText.trim()) return;
-    const text = aiText.trim(); setAiText(""); setAiBusy(true);
-    const history = [...aiMessages, { role: "user", content: text }]; setAiMessages(history);
-    try {
-      const r = await fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text, history }) });
-      const d = await r.json(); if (!r.ok) throw new Error(d.error || "AI 요청에 실패했습니다.");
-      setAiMessages(v => [...v, { role: "assistant", content: d.text }]);
-    } catch (e: any) { setAiMessages(v => [...v, { role: "assistant", content: `AI 연결 오류: ${e?.message || "알 수 없는 오류"}` }]); }
-    finally { setAiBusy(false); }
-  }
-
-  const me = state?.me || "";
-  const users = arr(state, ["users", "members"]);
-  const tasks = arr(state, ["tasks", "task_list", "app_tasks"]);
-  const questions = arr(state, ["questions", "question_list"]);
-  const notifications = arr(state, ["notifications", "notification_list"]);
-  const messages = useMemo(() => Object.values(state?.chats || {}).flatMap((v: any) => Array.isArray(v) ? v : []), [state]);
-  const assignedTasks = tasks.filter((t: any) => Array.isArray(t.assigneeIds) && t.assigneeIds.includes(me));
-  const createdTasks = tasks.filter((t: any) => t.creatorId === me);
-
-  if (!auth) return <div className="auth-page"><form className="auth-card" onSubmit={submitAuth}>
-    <div className="brand big"><span>학습</span> 멘토링</div><h1>{register ? "회원가입" : "로그인"}</h1>
-    <p className="muted">숙제 · 질문 · 일정 · 개인채팅 · AI 학습도우미</p>
-    {register && <><input placeholder="이름" value={name} onChange={e => setName(e.target.value)} required/><select value={subject} onChange={e => setSubject(e.target.value)}>{SUBJECTS.map(s => <option key={s}>{s}</option>)}</select></>}
-    <input placeholder="아이디" value={id} onChange={e => setId(e.target.value)} required/><input type="password" placeholder="비밀번호" value={pw} onChange={e => setPw(e.target.value)} required/>
-    <button className="primary" disabled={busy}>{busy ? "처리 중..." : register ? "가입하고 시작" : "로그인"}</button>
-    {error && <div className="error">{error}</div>}
-    <button type="button" className="link" onClick={() => { setRegister(v => !v); setError(""); }}>{register ? "로그인으로 돌아가기" : "처음이신가요? 회원가입"}</button>
-  </form></div>;
-
-  return <div className="shell">
-    <aside className="sidebar"><div className="brand"><span>학습</span> 멘토링</div><nav className="nav">{MENU.map(m => <button key={m} className={active === m ? "active" : ""} onClick={() => setActive(m)}>{m}</button>)}</nav><button className="logout" onClick={() => action("app_logout").then(() => location.reload())}>↪ 로그아웃</button></aside>
-    <main className="main"><header className="topbar"><h1>{active}</h1><button className="icon-btn" onClick={() => setActive("🔔 알림")}>🔔 {notifications.filter((n: any) => !n.read).length}</button></header>
-      <div className="content">{error && <div className="error banner">{error}</div>}
-        {active === "🏠 홈" && <><section className="hero"><h2>오늘도 차근차근, 공부를 이어가요 👋</h2><p>숙제와 질문, 일정과 개인채팅을 한곳에서 관리하세요.</p></section><div className="grid"><Stat label="제출할 숙제" value={assignedTasks.length} icon="📝"/><Stat label="내가 낸 숙제" value={createdTasks.length} icon="📤"/><Stat label="완료" value={assignedTasks.filter((t:any)=>(t.statusByUser?.[me]||"미제출")==="완료").length} icon="✅"/><Stat label="새 알림" value={notifications.filter((n:any)=>!n.read).length} icon="🔔"/></div><TaskSubmitList tasks={assignedTasks} me={me} submit={id=>action("app_submit_task",{p_task:Number(id),p_memo:"",p_files:[]})}/></>}
-
-        {active === "📝 숙제" && <div className="split"><section className="card form-card"><h2>📤 숙제 내기</h2><p className="muted">내 담당 과목의 숙제를 등록하고 수행 대상을 선택합니다.</p><div className="muted smalltext">담당 과목: {state?.subject || "-"}</div><input placeholder="숙제 제목" value={taskTitle} onChange={e=>setTaskTitle(e.target.value)}/><textarea placeholder="설명" value={taskDesc} onChange={e=>setTaskDesc(e.target.value)}/><input type="date" value={taskDue} onChange={e=>setTaskDue(e.target.value)}/><div><b>수행 대상</b>{users.filter((u:any)=>u.id!==me).map((u:any)=><label key={u.id} style={{display:"block",marginTop:7}}><input type="checkbox" checked={taskAssignees.includes(u.id)} onChange={e=>setTaskAssignees(v=>e.target.checked?[...v,u.id]:v.filter(x=>x!==u.id))}/> {u.name} <span className="muted">({u.subject})</span></label>)}</div><button className="primary" disabled={busy} onClick={createTask}>숙제 등록</button></section><section><h2>📋 내가 낸 숙제</h2><p className="muted">내가 등록한 숙제와 각 수행자의 상태를 확인합니다.</p><CreatedTaskList tasks={createdTasks}/></section></div>}
-
-        {active === "❓ 질문게시판" && <><section className="card form-card"><h2>질문 작성</h2><label className="smalltext">질문 과목</label><select value={qSubject} onChange={e=>setQSubject(e.target.value)}>{SUBJECTS.map(s=><option key={s}>{s}</option>)}</select><input placeholder="제목" value={qTitle} onChange={e=>setQTitle(e.target.value)}/><textarea placeholder="내용" value={qBody} onChange={e=>setQBody(e.target.value)}/><button className="primary" disabled={busy} onClick={createQuestion}>등록</button></section><section className="card">{questions.length?questions.map((q:any)=><article className="post" key={q.id}><div className="section-title"><b>{q.title}</b><span className="badge gray">{q.subject||"전체"}</span></div><p>{q.body}</p>{(q.comments||[]).map((c:any)=><div className="muted smalltext" key={c.id}>↳ {c.name||c.user_id}: {c.body}</div>)}<input placeholder="댓글 작성 후 Enter" onKeyDown={e=>{if(e.key==="Enter"&&e.currentTarget.value.trim()){action("app_add_comment",{p_type:"question",p_target:Number(q.id),p_text:e.currentTarget.value.trim(),p_files:[]});e.currentTarget.value=""}}}/></article>):<Empty text="아직 등록된 질문이 없습니다."/>}</section></>}
-
-        {active === "📅 캘린더" && <Calendar month={month} setMonth={setMonth} events={calendar}/>} 
-        {active === "💬 개인채팅" && <Chat users={users} messages={messages} me={me} selected={chatUser} setSelected={setChatUser} text={chatText} setText={setChatText} send={(to,text)=>action("app_send_message",{p_to:to,p_text:text,p_files:[]})}/>} 
-        {active === "🤖 AI 학습도우미" && <section className="card ai"><div className="ai-head"><div><h2>🤖 AI 학습도우미</h2><p className="muted">개념 설명, 풀이 힌트, 학습 계획을 도와줍니다.</p></div><span className="badge green">AI</span></div><div className="ai-messages">{aiMessages.length?aiMessages.map((m,i)=><div key={i} className={m.role==="user"?"ai-msg user":"ai-msg"}>{m.content}</div>):<div className="ai-welcome">공부와 관련된 질문을 입력해보세요.</div>}</div><form className="ai-compose" onSubmit={askAI}><input value={aiText} onChange={e=>setAiText(e.target.value)} placeholder="공부와 관련된 질문을 입력하세요"/><button className="primary" disabled={aiBusy}>{aiBusy?"생각 중...":"질문하기"}</button></form></section>}
-        {active === "🔔 알림" && <section className="card"><div className="section-title"><h2>알림</h2><button className="outline" onClick={()=>action("app_mark_notifications_read",{p_ids:notifications.map((n:any)=>Number(n.id))})}>모두 읽음</button></div>{notifications.length?notifications.map((n:any)=><div className="post" key={n.id}><b>{n.title}</b><div className="muted">{n.body}</div></div>):<Empty text="새 알림이 없습니다."/>}</section>}
-      </div>
-    </main>
-  </div>;
+export default function Home(){
+ const[active,setActive]=useState(MENU[0]),[state,setState]=useState<Obj|null>(null),[auth,setAuth]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[register,setRegister]=useState(false);
+ const[id,setId]=useState(""),[pw,setPw]=useState(""),[name,setName]=useState(""),[subject,setSubject]=useState(SUBJECTS[0]);
+ const[taskTitle,setTaskTitle]=useState(""),[taskDesc,setTaskDesc]=useState(""),[taskDue,setTaskDue]=useState(""),[taskAssignees,setTaskAssignees]=useState<string[]>([]),[taskFiles,setTaskFiles]=useState<File[]>([]);
+ const[qSubject,setQSubject]=useState(SUBJECTS[0]),[qTitle,setQTitle]=useState(""),[qBody,setQBody]=useState("");
+ const[chatUser,setChatUser]=useState(""),[chatText,setChatText]=useState(""),[chatFiles,setChatFiles]=useState<File[]>([]);
+ const[submitFiles,setSubmitFiles]=useState<Record<string,File[]>>({}),[submitMemo,setSubmitMemo]=useState<Record<string,string>>({});
+ const[aiText,setAiText]=useState(""),[aiMessages,setAiMessages]=useState<{role:string;content:string}[]>([]),[aiBusy,setAiBusy]=useState(false),[month,setMonth]=useState(new Date()),[calendar,setCalendar]=useState<any[]>([]),[progress,setProgress]=useState("");
+ const toast=(msg:string)=>{setError(msg);window.setTimeout(()=>setError(v=>v===msg?"":v),3000)};
+ async function refresh(){try{const s=await rpc("app_state");setState(s);setAuth(true);setError("")}catch(e:any){setAuth(false);const m=String(e?.message||"");if(m&&!/UNAUTHORIZED|로그인|token/i.test(m))toast(m)}}
+ useEffect(()=>{refresh()},[]);useEffect(()=>{if(!auth)return;const from=new Date(month.getFullYear(),month.getMonth(),1).toISOString().slice(0,10),to=new Date(month.getFullYear(),month.getMonth()+1,0).toISOString().slice(0,10);rpc("app_calendar",{p_from:from,p_to:to}).then(d=>setCalendar(Array.isArray(d)?d:arr(d,["events","calendar","data"]))).catch(()=>setCalendar([]))},[auth,month]);
+ async function action(fn:string,args:Obj={}){try{setBusy(true);setError("");await rpc(fn,args);await refresh()}catch(e:any){toast(e?.message||"작업에 실패했습니다.")}finally{setBusy(false)}}
+ async function submitAuth(e:FormEvent){e.preventDefault();try{setBusy(true);setError("");if(register)await rpc("app_register",{p_id:id.trim(),p_name:name.trim(),p_pw:pw,p_subject:subject});await rpc("app_login",{p_id:id.trim(),p_pw:pw});await refresh()}catch(e:any){toast(e?.message||"로그인에 실패했습니다.")}finally{setBusy(false)}}
+ async function createTask(e:FormEvent){e.preventDefault();try{if(!taskTitle.trim())throw new Error("숙제 제목을 입력해주세요.");if(!taskAssignees.length)throw new Error("이 숙제의 수행 대상을 선택해주세요.");setBusy(true);setError("");const ids=await uploadFiles(taskFiles,setProgress);await rpc("app_create_task",{p_title:taskTitle.trim(),p_desc:taskDesc.trim(),p_subject:currentUser?.subject||"",p_due:taskDue||null,p_assignees:taskAssignees,p_files:ids});await refresh();setTaskTitle("");setTaskDesc("");setTaskDue("");setTaskAssignees([]);setTaskFiles([]);setProgress("")}catch(e:any){toast(e?.message||"숙제 등록에 실패했습니다.");setProgress("")}finally{setBusy(false)}}
+ async function createQuestion(){try{if(!qTitle.trim()||!qBody.trim())throw new Error("질문 제목과 내용을 입력해주세요.");await action("app_create_question",{p_subject:qSubject,p_title:qTitle.trim(),p_body:qBody.trim(),p_files:[]});setQTitle("");setQBody("")}catch(e:any){toast(e?.message||"질문 등록에 실패했습니다.")}}
+ async function submitTask(t:any){const files=submitFiles[String(t.id)]||[];try{setBusy(true);setError("");const ids=await uploadFiles(files,setProgress);await rpc("app_submit_task",{p_task:Number(t.id),p_memo:submitMemo[String(t.id)]||"",p_files:ids});await refresh();setSubmitFiles(v=>({...v,[t.id]:[]}));setSubmitMemo(v=>({...v,[t.id]:""}));setProgress("")}catch(e:any){toast(e?.message||"숙제 제출에 실패했습니다.");setProgress("")}finally{setBusy(false)}}
+ async function sendChat(){if(!chatUser||(!chatText.trim()&&!chatFiles.length))return;try{setBusy(true);setError("");const ids=await uploadFiles(chatFiles,setProgress);await rpc("app_send_message",{p_to:chatUser,p_text:chatText.trim(),p_files:ids});await refresh();setChatText("");setChatFiles([]);setProgress("")}catch(e:any){toast(e?.message||"메시지 전송에 실패했습니다.");setProgress("")}finally{setBusy(false)}}
+ async function askAI(e:FormEvent){e.preventDefault();if(!aiText.trim())return;const text=aiText.trim();setAiText("");setAiBusy(true);const history=[...aiMessages,{role:"user",content:text}];setAiMessages(history);try{const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:text,history})});const d=await r.json();if(!r.ok)throw new Error(d.error||"AI 요청에 실패했습니다.");setAiMessages(v=>[...v,{role:"assistant",content:d.text}])}catch(e:any){setAiMessages(v=>[...v,{role:"assistant",content:`AI 연결 오류: ${e?.message||"알 수 없는 오류"}`}])}finally{setAiBusy(false)}}
+ const me=state?.me||"",users=arr(state,["users","members"]),tasks=arr(state,["tasks","task_list","app_tasks"]),questions=arr(state,["questions","question_list"]),notifications=arr(state,["notifications","notification_list"]),messages=useMemo(()=>Object.values(state?.chats||{}).flatMap((v:any)=>Array.isArray(v)?v:[]),[state]),currentUser=users.find((u:any)=>u.id===me),assignedTasks=tasks.filter((t:any)=>Array.isArray(t.assigneeIds)&&t.assigneeIds.includes(me)),createdTasks=tasks.filter((t:any)=>t.creatorId===me);
+ if(!auth)return <div className="auth-page"><form className="auth-card" onSubmit={submitAuth}><div className="brand big"><span>학습</span> 멘토링</div><h1>{register?"회원가입":"로그인"}</h1><p className="muted">숙제 · 질문 · 일정 · 개인채팅 · AI 학습도우미</p>{register&&<><input placeholder="이름" value={name} onChange={e=>setName(e.target.value)} required/><select value={subject} onChange={e=>setSubject(e.target.value)}>{SUBJECTS.map(s=><option key={s}>{s}</option>)}</select></>}<input placeholder="아이디" value={id} onChange={e=>setId(e.target.value)} required/><input type="password" placeholder="비밀번호" value={pw} onChange={e=>setPw(e.target.value)} required/><button className="primary" disabled={busy}>{busy?"처리 중...":register?"가입하고 시작":"로그인"}</button>{error&&<div className="error">{error}</div>}<button type="button" className="link" onClick={()=>{setRegister(v=>!v);setError("")}}>{register?"로그인으로 돌아가기":"처음이신가요? 회원가입"}</button></form></div>;
+ return <div className="shell"><aside className="sidebar"><div className="brand"><span>학습</span> 멘토링</div><nav className="nav">{MENU.map(m=><button key={m} className={active===m?"active":""} onClick={()=>setActive(m)}>{m}</button>)}</nav><button className="logout" onClick={()=>action("app_logout").then(()=>location.reload())}>↪ 로그아웃</button></aside><main className="main"><header className="topbar"><h1>{active}</h1><div className="topbar-right"><div className="user-pill">{currentUser?userLabel(currentUser):""}</div><button className="icon-btn" onClick={()=>setActive("🔔 알림")}>🔔 {notifications.filter((n:any)=>!n.read).length}</button></div></header><div className="content">{error&&<div className="error banner">{error}</div>}{progress&&<div className="progress banner">{progress}</div>}
+ {active==="🏠 홈"&&<><section className="hero"><h2>오늘도 차근차근, 공부를 이어가요 👋</h2><p>숙제와 질문, 일정과 개인채팅을 한곳에서 관리하세요.</p></section><div className="grid"><Stat label="제출할 숙제" value={assignedTasks.length} icon="📝"/><Stat label="내가 낸 숙제" value={createdTasks.length} icon="📤"/><Stat label="완료" value={assignedTasks.filter((t:any)=>(t.statusByUser?.[me]||"미제출")==="완료").length} icon="✅"/><Stat label="새 알림" value={notifications.filter((n:any)=>!n.read).length} icon="🔔"/></div></>}
+ {active==="📤 숙제 내기"&&<div className="single"><section className="card form-card"><h2>📤 숙제 내기</h2><p className="muted">담당 과목과 출제자가 자동으로 지정됩니다.</p><div className="info-row"><span>과목</span><b>{currentUser?.subject||"-"}</b></div><div className="info-row"><span>출제자</span><b>{userLabel(currentUser)}</b></div><input placeholder="숙제 제목" value={taskTitle} onChange={e=>setTaskTitle(e.target.value)}/><textarea placeholder="숙제 내용 / 설명" value={taskDesc} onChange={e=>setTaskDesc(e.target.value)}/><input type="date" value={taskDue} onChange={e=>setTaskDue(e.target.value)}/><div><b>수행 대상</b>{users.filter((u:any)=>u.id!==me).map((u:any)=><label key={u.id} className="check-row"><input type="checkbox" checked={taskAssignees.includes(u.id)} onChange={e=>setTaskAssignees(v=>e.target.checked?[...v,u.id]:v.filter(x=>x!==u.id))}/>{userLabel(u)}</label>)}</div><FilePicker files={taskFiles} setFiles={setTaskFiles}/><button className="primary" disabled={busy} onClick={createTask}>{busy?progress||"처리 중...":"숙제 등록"}</button></section><section><h2>📋 내가 낸 숙제</h2><p className="muted">내가 출제한 숙제의 내용, 과목, 대상과 제출 상태를 확인할 수 있습니다.</p><CreatedTaskList tasks={createdTasks} users={users}/></section></div>}
+ {active==="📥 숙제 제출"&&<section><div className="section-heading"><div><h2>📥 숙제 제출하기</h2><p className="muted">나에게 배정된 숙제만 표시됩니다.</p></div></div><TaskSubmitList tasks={assignedTasks} me={me} files={submitFiles} setFiles={setSubmitFiles} memos={submitMemo} setMemos={setSubmitMemo} submit={submitTask} users={users}/></section>}
+ {active==="❓ 질문게시판"&&<><section className="card form-card"><h2>질문 작성</h2><label className="smalltext">질문 과목</label><select value={qSubject} onChange={e=>setQSubject(e.target.value)}>{SUBJECTS.map(s=><option key={s}>{s}</option>)}</select><input placeholder="제목" value={qTitle} onChange={e=>setQTitle(e.target.value)}/><textarea placeholder="내용" value={qBody} onChange={e=>setQBody(e.target.value)}/><button className="primary" disabled={busy} onClick={createQuestion}>등록</button></section><section className="card">{questions.length?questions.map((q:any)=><article className="post" key={q.id}><div className="section-title"><div><b>{q.title}</b><div className="muted smalltext">작성자: {userLabel(users.find((u:any)=>u.id===q.authorId))}</div></div><span className="badge gray">{q.subject||"전체"}</span></div><p>{q.body}</p><AttachmentList attachments={q.attachments}/>{(q.comments||[]).map((c:any)=><div className="comment" key={c.id}>↳ {c.name||c.user_id}: {c.body}</div>)}<input placeholder="댓글 작성 후 Enter" onKeyDown={e=>{if(e.key==="Enter"&&e.currentTarget.value.trim()){action("app_add_comment",{p_type:"question",p_target:Number(q.id),p_text:e.currentTarget.value.trim(),p_files:[]});e.currentTarget.value=""}}}/></article>):<Empty text="아직 등록된 질문이 없습니다."/>}</section></>}
+ {active==="📅 캘린더"&&<Calendar month={month} setMonth={setMonth} events={calendar}/>} {active==="💬 개인채팅"&&<Chat users={users} messages={messages} me={me} selected={chatUser} setSelected={setChatUser} text={chatText} setText={setChatText} files={chatFiles} setFiles={setChatFiles} send={sendChat}/>} {active==="🤖 AI 학습도우미"&&<section className="card ai"><div className="ai-head"><div><h2>🤖 AI 학습도우미</h2><p className="muted">개념 설명, 풀이 힌트, 학습 계획을 도와줍니다.</p></div><span className="badge green">AI</span></div><div className="ai-messages">{aiMessages.length?aiMessages.map((m,i)=><div key={i} className={m.role==="user"?"ai-msg user":"ai-msg"}>{m.content}</div>):<div className="ai-welcome">공부와 관련된 질문을 입력해보세요.</div>}</div><form className="ai-compose" onSubmit={askAI}><input value={aiText} onChange={e=>setAiText(e.target.value)} placeholder="공부와 관련된 질문을 입력하세요"/><button className="primary" disabled={aiBusy}>{aiBusy?"생각 중...":"질문하기"}</button></form></section>}{active==="🔔 알림"&&<section className="card"><div className="section-title"><h2>알림</h2><button className="outline" onClick={()=>action("app_mark_notifications_read",{p_ids:notifications.map((n:any)=>Number(n.id))})}>모두 읽음</button></div>{notifications.length?notifications.map((n:any)=><div className="post" key={n.id}><b>{n.title}</b><div className="muted">{n.body}</div></div>):<Empty text="새 알림이 없습니다."/>}</section>}</div></main></div>;
 }
 function Stat({label,value,icon}:{label:string;value:number;icon:string}){return <div className="card stat"><div><div className="muted">{label}</div><strong>{value}</strong></div><span>{icon}</span></div>}
 function Empty({text}:{text:string}){return <div className="empty">{text}</div>}
-function TaskSubmitList({tasks,me,submit}:{tasks:any[];me:string;submit:(id:number)=>void}){return <section className="card"><div className="section-title"><h2>📥 숙제 제출</h2></div>{tasks.length?tasks.map((t:any)=>{const status=t.statusByUser?.[me]||"미제출";return <article className="task" key={t.id}><div><b>{t.title}</b><div className="muted smalltext">{t.subject||"전체"} · 마감 {t.due||"-"}</div>{t.description&&<div className="smalltext">{t.description}</div>}</div><div className="task-actions"><span className={`badge ${statusClass(status)}`}>{status}</span>{status!=="완료"&&<button className="outline" onClick={()=>submit(Number(t.id))}>제출</button>}</div></article>}) : <Empty text="현재 나에게 배정된 숙제가 없습니다."/>}</section>}
-function CreatedTaskList({tasks}:{tasks:any[]}){return <section className="card">{tasks.length?tasks.map((t:any)=><article className="task" key={t.id}><div><b>{t.title}</b><div className="muted smalltext">{t.subject||""} · 마감 {t.due||"-"}</div><div className="smalltext">수행 대상: {(t.assigneeIds||[]).map((uid:string)=>uid).join(", ")||"없음"}</div></div><div className="task-actions">{(t.assigneeIds||[]).map((uid:string)=><span className={`badge ${statusClass(t.statusByUser?.[uid]||"미제출")}`} key={uid}>{t.statusByUser?.[uid]||"미제출"}</span>)}</div></article>):<Empty text="내가 낸 숙제가 없습니다."/>}</section>}
+function FilePicker({files,setFiles}:{files:File[];setFiles:(f:File[])=>void}){const ref=useRef<HTMLInputElement>(null);return <div className="file-picker"><div className="file-head"><b>📎 파일 첨부</b><span className="muted smalltext">최대 5개 · 파일당 10MB 이하</span></div><input ref={ref} type="file" multiple hidden onChange={e=>{const incoming=Array.from(e.target.files||[]);try{validateFiles([...files,...incoming]);setFiles([...files,...incoming])}catch(err:any){window.alert(err.message)}e.currentTarget.value=""}}/><button type="button" className="outline" onClick={()=>ref.current?.click()}>파일 선택</button>{files.length>0&&<div className="file-list">{files.map((f,i)=><div className="file-chip" key={`${f.name}-${i}`}><span>{f.name} · {(f.size/1024/1024).toFixed(2)}MB</span><button type="button" onClick={()=>setFiles(files.filter((_,x)=>x!==i))}>×</button></div>)}</div>}</div>}
+function AttachmentList({attachments}:{attachments:any[]}){if(!Array.isArray(attachments)||!attachments.length)return null;return <div className="attachment-list">{attachments.map((a:any)=><Attachment key={a.id||a.name} a={a}/>)}</div>}
+function Attachment({a}:{a:any}){const[busy,setBusy]=useState(false);async function open(){try{setBusy(true);const d=await rpc("app_get_file",{p_id:a.id});const bytes=Uint8Array.from(atob(d.data),c=>c.charCodeAt(0));const url=URL.createObjectURL(new Blob([bytes],{type:d.mime}));const el=document.createElement("a");el.href=url;el.download=d.name||a.name||"file";el.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}catch(e:any){window.alert(e?.message||"파일을 열 수 없습니다.")}finally{setBusy(false)}}return <button type="button" className="attachment" onClick={open}>{busy?"불러오는 중...":"📎"} {a.name||"첨부파일"} {a.size?`(${(a.size/1024/1024).toFixed(2)}MB)`:""}</button>}
+function TaskSubmitList({tasks,me,files,setFiles,memos,setMemos,submit,users}:{tasks:any[];me:string;files:Record<string,File[]>;setFiles:(v:Record<string,File[]>)=>void;memos:Record<string,string>;setMemos:(v:Record<string,string>)=>void;submit:(t:any)=>void;users:any[]}){return <section className="card">{tasks.length?tasks.map((t:any)=>{const status=t.statusByUser?.[me]||"미제출";return <article className="task task-large" key={t.id}><div className="task-main"><div className="section-title"><div><b>{t.title}</b><div className="muted smalltext">과목: {t.subject||"-"} · 출제자: {userLabel(users.find((u:any)=>u.id===t.creatorId))} · 마감: {t.due||"-"}</div></div><span className={`badge ${statusClass(status)}`}>{status}</span></div><div className="task-desc">{t.desc||t.description||"내용 없음"}</div><AttachmentList attachments={t.attachments}/>{t.feedbackByUser?.[me]&&<div className="feedback">피드백: {t.feedbackByUser[me]}</div>}{status!=="완료"&&<><textarea placeholder="제출 메모(선택)" value={memos[String(t.id)]||""} onChange={e=>setMemos({...memos,[String(t.id)]:e.target.value})}/><FilePicker files={files[String(t.id)]||[]} setFiles={f=>setFiles({...files,[String(t.id)]:f})}/><button className="outline" onClick={()=>submit(t)}>제출하기</button></>}</div></article>}) : <Empty text="현재 나에게 배정된 숙제가 없습니다."/>}</section>}
+function CreatedTaskList({tasks,users}:{tasks:any[];users:any[]}){return <section className="card">{tasks.length?tasks.map((t:any)=><article className="task task-large" key={t.id}><div className="section-title"><div><b>{t.title}</b><div className="muted smalltext">과목: {t.subject||"-"} · 출제자: {userLabel(users.find((u:any)=>u.id===t.creatorId))} · 마감: {t.due||"-"}</div></div></div><div className="task-desc">{t.desc||t.description||"내용 없음"}</div><AttachmentList attachments={t.attachments}/><div className="smalltext"><b>수행 대상 및 상태</b></div>{(t.assigneeIds||[]).map((uid:string)=><div className="assignee-status" key={uid}><span>{userLabel(users.find((u:any)=>u.id===uid))}</span><span className={`badge ${statusClass(t.statusByUser?.[uid]||"미제출")}`}>{t.statusByUser?.[uid]||"미제출"}</span>{t.memoByUser?.[uid]&&<span className="muted">메모: {t.memoByUser[uid]}</span>}{t.submissionAttachments?.[uid]&&<AttachmentList attachments={t.submissionAttachments[uid]}/>}</div>)}</article>):<Empty text="내가 낸 숙제가 없습니다."/>}</section>}
 function Calendar({month,setMonth,events}:{month:Date;setMonth:(d:Date)=>void;events:any[]}){const y=month.getFullYear(),m=month.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();return <section className="card calendar"><div className="cal-head"><button onClick={()=>setMonth(new Date(y,m-1,1))}>‹</button><h2>{y}년 {m+1}월</h2><button onClick={()=>setMonth(new Date(y,m+1,1))}>›</button></div><div className="week">{["일","월","화","수","목","금","토"].map(x=><b key={x}>{x}</b>)}</div><div className="days">{Array.from({length:first+days},(_,i)=>i<first?null:i-first+1).map((d,i)=><div className="day" key={i}>{d&&<><span>{d}</span>{events.filter((e:any)=>String(e.due||e.date||"").endsWith(`-${String(d).padStart(2,"0")}`)).slice(0,2).map((e:any,j:number)=><em key={j}>{e.title||"일정"}</em>)}</>}</div>)}</div></section>}
-function Chat({users,messages,me,selected,setSelected,text,setText,send}:{users:any[];messages:any[];me:string;selected:string;setSelected:(v:string)=>void;text:string;setText:(v:string)=>void;send:(to:string,text:string)=>void}){const visible=messages.filter((m:any)=>selected&&(m.from===selected||m.to===selected));return <section className="card chat"><div className="chat-users"><h3>대화 상대</h3>{users.filter((u:any)=>u.id!==me).map((u:any)=><button key={u.id} className={selected===u.id?"selected":""} onClick={()=>setSelected(u.id)}>{u.name}<span className="muted smalltext">{u.subject}</span></button>)}</div><div className="chat-main"><div className="messages">{visible.length?visible.map((m:any)=><div key={m.id} className={m.from===me?"bubble mine":"bubble"}>{m.text||m.body}</div>):<Empty text={selected?"아직 메시지가 없습니다.":"대화 상대를 선택하세요."}/>}</div><div className="chat-compose"><input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&text.trim()&&selected){send(selected,text.trim());setText("")}}} placeholder="메시지를 입력하세요"/><button className="primary small" onClick={()=>{if(text.trim()&&selected){send(selected,text.trim());setText("")}}}>전송</button></div></div></section>}
+function Chat({users,messages,me,selected,setSelected,text,setText,files,setFiles,send}:{users:any[];messages:any[];me:string;selected:string;setSelected:(v:string)=>void;text:string;setText:(v:string)=>void;files:File[];setFiles:(v:File[])=>void;send:()=>void}){const visible=messages.filter((m:any)=>selected&&(m.from===selected||m.to===selected));const other=users.find((u:any)=>u.id===selected);return <section className="card chat"><div className="chat-users"><h3>대화 상대</h3>{users.filter((u:any)=>u.id!==me).map((u:any)=><button key={u.id} className={selected===u.id?"selected":""} onClick={()=>setSelected(u.id)}><span>{u.name} ({u.subject})</span><small>{u.id}</small></button>)}</div><div className="chat-main"><div className="chat-title">{other?`${other.name} (${other.subject})`:`대화 상대를 선택하세요`}{other&&<span className="muted smalltext"> · {other.id}</span>}</div><div className="messages">{visible.length?visible.map((m:any)=><div key={m.id} className={m.from===me?"bubble mine":"bubble"}><div>{m.text||m.body}</div><AttachmentList attachments={m.attachments}/><small>{m.at||""}</small></div>):<Empty text={selected?"아직 메시지가 없습니다.":"대화 상대를 선택하세요."}/>}</div><div className="chat-compose"><input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}}} placeholder="메시지를 입력하세요"/><FilePicker files={files} setFiles={setFiles}/><button className="primary small" onClick={send}>전송</button></div></div></section>}
