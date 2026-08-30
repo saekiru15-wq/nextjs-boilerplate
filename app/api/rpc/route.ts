@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const SUPABASE_URL = "https://enhpbdwcnoetawiwadld.supabase.co";
 const SUPABASE_KEY = "sb_publishable_5gHrPhRHnXLbHVZG0JPgEA_16_3HYIj";
 
-const allowed = new Set(["app_login","app_register","app_logout","app_state","app_calendar","app_create_task","app_submit_task","app_review_task","app_create_question","app_add_comment","app_list_comments","app_send_message","app_mark_notifications_read","app_upload_file","app_get_file","app_ai_history","app_ai_save"]);
+const allowed = new Set(["app_login","app_register","app_logout","app_state","app_calendar","app_create_task","app_update_task","app_delete_task","app_submit_task","app_update_submission","app_delete_submission","app_review_task","app_create_question","app_update_question","app_delete_question","app_add_comment","app_update_comment","app_delete_comment","app_list_comments","app_send_message","app_update_message","app_delete_message","app_mark_notifications_read","app_upload_file","app_get_file","app_ai_history","app_ai_save","app_update_account","app_delete_account"]);
 
 export async function POST(request: NextRequest) {
   try {
