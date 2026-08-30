@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/patch-page.cjs && node scripts/patch-attachments.cjs && node scripts/patch-account.cjs && node scripts/patch-submissions.cjs && node scripts/patch-comments.cjs && node scripts/patch-edit-delete.cjs && node scripts/patch-owner-controls.cjs && node scripts/patch-final.cjs && next build",
+    "build": "node scripts/patch-page.cjs && node scripts/patch-attachments.cjs && node scripts/patch-account.cjs && node scripts/patch-submissions.cjs && node scripts/patch-comments.cjs && node scripts/patch-edit-delete.cjs && node scripts/patch-owner-controls.cjs && node scripts/patch-final2.cjs && next build",
     "start": "next start",
     "lint": "eslint"
   },
