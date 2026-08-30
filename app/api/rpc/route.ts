@@ -11,9 +11,16 @@ export async function POST(request: NextRequest) {
     const { fn, args = {} } = await request.json();
     if (!allowed.has(fn)) return NextResponse.json({ error: "Unsupported RPC." }, { status: 400 });
 
-    const body = { ...args };
-    const cookieToken = request.cookies.get("mentor_token")?.value;
-    if (cookieToken && !body.p_token) body.p_token = cookieToken;
+    const body: Record<string, unknown> = { ...args };
+    const cookieToken = request.cookies.get("mentor_token")?.value ?? null;
+
+    // PostgREST chooses an RPC overload from the JSON argument names.
+    // These functions require p_token even when the user is not logged in.
+    if ((fn === "app_state" || fn === "app_calendar") && !("p_token" in body)) {
+      body.p_token = cookieToken;
+    } else if (cookieToken && !("p_token" in body)) {
+      body.p_token = cookieToken;
+    }
 
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
       method: "POST",
