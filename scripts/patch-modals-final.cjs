@@ -12,5 +12,5 @@ s=s.replace(/if\(!window\.confirm\(([^)]*)\)\)return;/g,'if(!(await showConfirm(
 const promptCount=(s.match(/window\.prompt\(/g)||[]).length;
 const confirmCount=(s.match(/window\.confirm\(/g)||[]).length;
 console.log(`[modal-check] remaining browser prompt=${promptCount}, confirm=${confirmCount}`);
-if(confirmCount)console.log('[modal-check] confirm context:',(s.match(/.{0,180}window\.confirm\(.{0,260}/g)||[]).join('\n---\n')));
+if(confirmCount){const ctx=s.match(/.{0,180}window\.confirm\(.{0,260}/g)||[];console.log('[modal-check] confirm context:',ctx.join('\n---\n'));}
 fs.writeFileSync(f,s);
