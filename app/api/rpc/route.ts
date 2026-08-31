@@ -11,8 +11,11 @@ export async function POST(request: NextRequest) {
     if (!allowed.has(fn)) return NextResponse.json({ error: "Unsupported RPC." }, { status: 400 });
     const body: Record<string, unknown> = { ...args };
     const cookieToken = request.cookies.get("mentor_token")?.value ?? null;
+    const headerToken = request.headers.get("x-mentor-token")?.trim() || null;
+    const sessionToken = cookieToken || headerToken;
     const needsSessionToken = fn !== "app_login" && fn !== "app_register";
-    if (needsSessionToken && cookieToken && !("p_token" in body)) body.p_token = cookieToken;
+    if (needsSessionToken && !sessionToken) return NextResponse.json({ error: "로그인 세션이 없습니다. 다시 로그인해 주세요." }, { status: 401 });
+    if (needsSessionToken && !("p_token" in body)) body.p_token = sessionToken;
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, { method: "POST", headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" });
     const text = await response.text();
     let data: unknown = text; try { data = JSON.parse(text); } catch {}
