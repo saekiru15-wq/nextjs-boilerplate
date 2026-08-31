@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/patch-page.cjs && node scripts/patch-attachments.cjs && node scripts/patch-account.cjs && node scripts/patch-submissions.cjs && node scripts/patch-comments.cjs && node scripts/patch-edit-delete.cjs && node scripts/patch-owner-controls.cjs && node scripts/patch-final4.cjs && node scripts/patch-modal-css.cjs && node scripts/patch-modals-final.cjs && node scripts/patch-edit-fix.cjs && node scripts/patch-final-ui.cjs && node scripts/patch-mobile-vertical-task.cjs && next build",
+    "build": "node scripts/patch-page.cjs && node scripts/patch-attachments.cjs && node scripts/patch-account.cjs && node scripts/patch-submissions.cjs && node scripts/patch-comments.cjs && node scripts/patch-edit-delete.cjs && node scripts/patch-owner-controls.cjs && node scripts/patch-final4.cjs && node scripts/patch-modal-css.cjs && node scripts/patch-modals-final.cjs && node scripts/patch-edit-fix.cjs && node scripts/patch-final-ui.cjs && node scripts/patch-mobile-vertical-task.cjs && node scripts/patch-reliability-notifications-daily.cjs && next build",
     "start": "next start",
     "lint": "eslint"
   },
