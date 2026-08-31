@@ -54,7 +54,7 @@ if(!s.includes('function DailyProject(')){
 // Unread dot: preserve the existing bell and number exactly; add only a red dot.
 if(!s.includes('notification-unread-dot')){
   s=s.replace('<button className="icon-btn" onClick={()=>setActive("🔔 알림")}>🔔 {notifications.filter((n:any)=>!n.read).length}</button>', '<button className="icon-btn notification-bell" onClick={()=>setActive("🔔 알림")}>🔔 {notifications.filter((n:any)=>!n.read).length}{notifications.some((n:any)=>!n.read)&&<span className="notification-unread-dot" aria-label="읽지 않은 알림"/>}</button>');
-  s=s.replace(' useEffect(()=>{refresh()},[]);', ' useEffect(()=>{refresh()},[]);\n useEffect(()=>{if(active!=="🔔 알림")return;const ids=notifications.filter((n:any)=>!n.read).map((n:any)=>Number(n.id)).filter(Number.isFinite);if(!ids.length)return;rpc("app_mark_notifications_read",{p_ids:ids}).then(()=>refresh()).catch(()=>{})},[active,notifications.length]);');
+  s=s.replace(' useEffect(()=>{refresh()},[]);', ' useEffect(()=>{refresh()},[]);\n useEffect(()=>{if(active!=="🔔 알림")return;const ids=notifications.filter((n:any)=>!n.read).map((n:any)=>Number(n.id)).filter(Number.isFinite);if(!ids.length)return;rpc("app_mark_notifications_read",{p_ids:ids}).then(()=>refresh()).catch(()=>{})},[active]);');
 }
 fs.writeFileSync(f,s);
 
@@ -76,7 +76,7 @@ const mobileCss=`
   .topbar{position:sticky;top:0;z-index:50}
   .topbar h1{font-size:20px}
   .auth-page{min-height:100dvh!important;min-height:100vh!important;display:grid!important;place-items:center!important;padding:16px!important;box-sizing:border-box!important}
-  .auth-card{position:fixed!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;width:min(420px,calc(100vw - 32px))!important;max-height:calc(100dvh - 32px);overflow:auto;margin:0!important;box-sizing:border-box}
+  .auth-card{position:fixed!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important;width:min(420px,calc(100vw - 32px))!important;max-height:calc(100dvh - 32px);overflow:auto;margin:0!important;box-sizing:border-box!important}
   .content{padding:14px!important}
 }
 `;
