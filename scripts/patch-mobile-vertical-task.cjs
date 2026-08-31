@@ -1,6 +1,8 @@
 const fs=require("fs"),path=require("path");
 const p=path.join(process.cwd(),"app","page.tsx"),c=path.join(process.cwd(),"app","globals.css");
 let s=fs.readFileSync(p,"utf8");
+s=s.replace(/<button className="hamburger"[\s\S]*?<\/button>/,"");
+s=s.replace(/<button className="mobile-close"[\s\S]*?<\/button>/,"");
 if(!s.includes("mobile-vertical-nav")){
 const nav='<nav className="mobile-vertical-nav">{MENU.map(m=><button type="button" key={m} className={active===m?"active":""} onClick={()=>setActive(m)}>{m}</button>)}</nav>';
 s=s.replace("</header><div className=\"content\">","</header>"+nav+"<div className=\"content\">");
