@@ -33,6 +33,29 @@ s=s.replace('<Calendar month={month} setMonth={setMonth} events={calendar} users
 s=s.replace("else if(x.type==='multiselect'){el=document.createElement('select');el.multiple=true;el.size=Math.min(7,Math.max(4,(x.options||[]).length));(x.options||[]).forEach(o=>{const op=document.createElement('option');op.value=String(o.value);op.textContent=String(o.label);op.selected=(x.value||[]).includes(String(o.value));el.appendChild(op)})}","else if(x.type==='multiselect'){el=document.createElement('div');el.style.cssText='display:grid;gap:8px;padding:10px;border:1px solid var(--line);border-radius:10px';(x.options||[]).forEach(o=>{const lab2=document.createElement('label');lab2.style.cssText='display:flex;align-items:center;gap:8px;color:var(--fg);font-size:14px;cursor:pointer';const cb=document.createElement('input');cb.type='checkbox';cb.value=String(o.value);cb.checked=(x.value||[]).includes(String(o.value));lab2.append(cb,document.createTextNode(String(o.label)));el.appendChild(lab2)})}");
 s=s.replace("else if(v.multiple&&v.tagName==='SELECT'){out[k]=Array.from(v.selectedOptions||[]).map(o=>String(o.value))}","else if(v.dataset&&v.dataset.multiselect==='1'){out[k]=Array.from(v.querySelectorAll('input[type=checkbox]:checked')).map((o:any)=>String(o.value))}");
 s=s.replace("vals[x.key]=el});","if(x.type==='multiselect')el.dataset.multiselect='1';vals[x.key]=el});");
+
+// ADDITIVE FEATURE PATCH: notification unread dot + Daily Project.
+if(!s.includes('📚 데일리 프로젝트')){
+  s=s.replace('const MENU = ["🏠 홈", "📤 숙제 내기", "📥 숙제 제출", "❓ 질문게시판", "📅 캘린더", "💬 개인채팅", "🤖 AI 학습도우미", "🔔 알림"];', 'const MENU = ["🏠 홈", "📤 숙제 내기", "📥 숙제 제출", "❓ 질문게시판", "📅 캘린더", "💬 개인채팅", "📚 데일리 프로젝트", "🤖 AI 학습도우미", "🔔 알림"];');
+}
+if(!s.includes('dailyWords')){
+  s=s.replace(' const[aiText,setAiText]=useState("")', ' const[dailyWords,setDailyWords]=useState<{word:string;meaning:string}[]>([]),[dailyLoading,setDailyLoading]=useState(false);\n const[aiText,setAiText]=useState("")');
+}
+if(!s.includes('daily-vocab-400.json')){
+  s=s.replace(' useEffect(()=>{refresh()},[]);', ' useEffect(()=>{refresh()},[]);\n useEffect(()=>{if(active!=="📚 데일리 프로젝트"||dailyWords.length||dailyLoading)return;setDailyLoading(true);fetch("/daily-vocab-400.json",{cache:"no-store"}).then(r=>r.ok?r.json():[]).then(v=>setDailyWords(Array.isArray(v)?v:[])).catch(()=>setDailyWords([])).finally(()=>setDailyLoading(false))},[active,dailyWords.length,dailyLoading]);');
+}
+if(!s.includes('active==="📚 데일리 프로젝트"')){
+  s=s.replace('{active==="🤖 AI 학습도우미"&&<section className="card ai">','{active==="📚 데일리 프로젝트"&&<DailyProject words={dailyWords} loading={dailyLoading}/>} {active==="🤖 AI 학습도우미"&&<section className="card ai">');
+}
+if(!s.includes('function DailyProject(')){
+  s += '\nfunction DailyProject({words,loading}:{words:{word:string;meaning:string}[];loading:boolean}){const today=new Date().toISOString().slice(0,10);const daily=useMemo(()=>{if(!words.length)return[];let seed=2166136261;for(const ch of today)seed=Math.imul(seed^ch.charCodeAt(0),16777619)>>>0;const pool=words.map((_,i)=>i),out:{word:string;meaning:string}[]=[];while(pool.length&&out.length<30){seed=(Math.imul(seed,1664525)+1013904223)>>>0;out.push(words[pool.splice(seed%pool.length,1)[0]])}return out},[words,today]);return <section><div className="section-heading"><div><h2>📚 데일리 프로젝트</h2><p className="muted">오늘의 랜덤 영단어 30개 · 홈에는 표시되지 않습니다.</p></div><span className="badge green">{today}</span></div><section className="card">{loading?<Empty text="단어를 불러오는 중입니다..."/>:daily.length?<div className="daily-list">{daily.map((v,i)=><div className="daily-word" key={i}><span>{i+1}</span><b>{v.word}</b><span>{v.meaning}</span></div>)}</div>:<Empty text="단어장을 불러오지 못했습니다."/>}</section></section>}\n';
+}
+
+// Unread dot: preserve the existing bell and number exactly; add only a red dot.
+if(!s.includes('notification-unread-dot')){
+  s=s.replace('<button className="icon-btn" onClick={()=>setActive("🔔 알림")}>🔔 {notifications.filter((n:any)=>!n.read).length}</button>', '<button className="icon-btn notification-bell" onClick={()=>setActive("🔔 알림")}>🔔 {notifications.filter((n:any)=>!n.read).length}{notifications.some((n:any)=>!n.read)&&<span className="notification-unread-dot" aria-label="읽지 않은 알림"/>}</button>');
+  s=s.replace(' useEffect(()=>{refresh()},[]);', ' useEffect(()=>{refresh()},[]);\n useEffect(()=>{if(active!=="🔔 알림")return;const ids=notifications.filter((n:any)=>!n.read).map((n:any)=>Number(n.id)).filter(Number.isFinite);if(!ids.length)return;rpc("app_mark_notifications_read",{p_ids:ids}).then(()=>refresh()).catch(()=>{})},[active,notifications.length]);');
+}
 fs.writeFileSync(f,s);
 
 const cssFile=path.join(process.cwd(),'app','globals.css');
@@ -57,5 +80,9 @@ const mobileCss=`
   .content{padding:14px!important}
 }
 `;
-if(!css.includes('Final mobile navigation/auth and AI model selector')){css+=mobileCss;fs.writeFileSync(cssFile,css)}
+if(!css.includes('Final mobile navigation/auth and AI model selector')){css+=mobileCss}
+if(!css.includes('notification-unread-dot')){
+  css+='\n.notification-bell{position:relative}.notification-unread-dot{position:absolute;right:7px;top:5px;width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 2px var(--card);pointer-events:none}.daily-list{display:grid}.daily-word{display:grid;grid-template-columns:42px minmax(120px,.8fr) 1.8fr;gap:14px;align-items:center;padding:16px;border-bottom:1px solid var(--line)}.daily-word:last-child{border-bottom:0}.daily-word span:first-child{color:var(--muted)}.daily-word span:last-child{color:var(--muted)}@media(max-width:600px){.daily-word{grid-template-columns:34px 1fr;gap:6px 10px}.daily-word span:last-child{grid-column:2}}';
+}
+fs.writeFileSync(cssFile,css)
 console.log('[final-ui] mobile nav, question subject mapping, calendar submit action, AI model selector and task-target checkboxes applied');
