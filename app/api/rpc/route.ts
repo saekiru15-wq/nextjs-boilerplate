@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
     if (!allowed.has(fn)) return NextResponse.json({ error: "Unsupported RPC." }, { status: 400 });
     const body: Record<string, unknown> = { ...args };
     const cookieToken = request.cookies.get("mentor_token")?.value ?? null;
-    if (!("p_token" in body) && (fn === "app_state" || fn === "app_calendar")) body.p_token = cookieToken;
-    else if (cookieToken && !("p_token" in body)) body.p_token = cookieToken;
+    const needsSessionToken = fn !== "app_login" && fn !== "app_register";
+    if (needsSessionToken && cookieToken && !("p_token" in body)) body.p_token = cookieToken;
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, { method: "POST", headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store" });
     const text = await response.text();
     let data: unknown = text; try { data = JSON.parse(text); } catch {}
