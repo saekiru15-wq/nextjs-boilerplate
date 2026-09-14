@@ -1,6 +1,7 @@
 const fs=require("fs"),path=require("path");
 const f=path.join(process.cwd(),"app","page.tsx");
 let s=fs.readFileSync(f,"utf8");
+if(!s.includes("const nowKey=")) s=s.replace("export default function Home(){","export default function Home(){ const nowKey=new Date().toISOString().slice(0,10);");
 
 // Remove only the accidental daily-sentence/overdue fragments from earlier attempts.
 s=s.replace(/<section className="card daily-sentence">[\s\S]*?<\/section>/g,"");
