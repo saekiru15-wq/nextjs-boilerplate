@@ -19,7 +19,7 @@ const daily = `const DAILY_ENGLISH: [string,string][]=[
   ["Even when two explanations appear to describe the same phenomenon, the predictions they make may differ in ways that can be tested by further observation.","두 설명이 같은 현상을 묘사하는 것처럼 보여도, 그것들이 내놓는 예측은 추가적인 관찰을 통해 검증할 수 있는 방식으로 서로 다를 수 있다."],
   ["Because the consequences of a decision may extend beyond the people who make it, evaluating its benefits requires attention to those who are affected indirectly as well.","어떤 결정의 결과가 결정을 내린 사람들을 넘어 확장될 수 있기 때문에, 그 이점을 평가하려면 간접적으로 영향을 받는 사람들에게도 주의를 기울여야 한다."],
   ["The more confidently a claim is presented, the more carefully we should examine the evidence offered in support of it rather than assuming that confidence itself indicates accuracy.","어떤 주장이 확신에 차서 제시될수록, 자신감 자체가 정확성을 의미한다고 가정하기보다 그 주장을 뒷받침하기 위해 제시된 증거를 더욱 주의 깊게 검토해야 한다."]
-
+];
 const dailyEnglish: [string,string]=DAILY_ENGLISH[Math.floor(Date.now()/3600000)%DAILY_ENGLISH.length];
 `;
 if (!s.includes('const DAILY_ENGLISH')) s = s.replace('const MENU =', daily+'const MENU =');
