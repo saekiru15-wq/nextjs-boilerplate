@@ -9,18 +9,18 @@ if (!homeRe.test(s)) throw new Error('home block not found');
 s = s.replace(homeRe, home);
 
 const daily = `const DAILY_ENGLISH: [string,string][]=[
-  [\"Small steps taken every day can lead to meaningful progress.\",\"매일 내딛는 작은 걸음이 의미 있는 발전으로 이어질 수 있다.\"],
-  [\"A good question can lead you to a better understanding.\",\"좋은 질문 하나가 더 나은 이해로 이끌 수 있다.\"],
-  [\"What matters most is not how fast you learn, but how consistently you practice.\",\"가장 중요한 것은 얼마나 빨리 배우느냐가 아니라 얼마나 꾸준히 연습하느냐이다.\"],
-  [\"When you make a mistake, try to understand why it happened before moving on.\",\"실수했을 때는 넘어가기 전에 왜 그런 일이 일어났는지 이해하려고 해라.\"],
-  [\"Reading carefully helps you notice ideas that you might otherwise miss.\",\"주의 깊게 읽으면 그렇지 않으면 놓칠 수도 있는 생각들을 발견하는 데 도움이 된다.\"],
-  [\"The more clearly you explain your reasoning, the easier it becomes for others to understand you.\",\"자신의 추론을 더 명확하게 설명할수록 다른 사람들이 당신을 이해하기 쉬워진다.\"],
-  [\"Even difficult problems become easier when you break them into smaller parts.\",\"어려운 문제도 작은 부분으로 나누면 더 쉬워진다.\"],
-  [\"Learning from a mistake is often more valuable than simply getting the right answer.\",\"실수에서 배우는 것은 단순히 정답을 얻는 것보다 더 가치 있을 때가 많다.\"],
-  [\"If you cannot explain an idea in simple words, you may need to study it again.\",\"어떤 생각을 쉬운 말로 설명할 수 없다면 다시 공부할 필요가 있을지도 모른다.\"],
-  [\"Patience gives you time to think carefully before making an important decision.\",\"인내심은 중요한 결정을 내리기 전에 신중하게 생각할 시간을 준다.\"]
-];
-const dailyEnglish: [string,string]=DAILY_ENGLISH[Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0).getTime())/86400000)%DAILY_ENGLISH.length];
+  ["Although the policy was intended to reduce inequality, its effects varied considerably depending on the circumstances in which it was implemented.","그 정책은 불평등을 줄이기 위한 것이었지만, 그것이 시행된 상황에 따라 그 효과는 상당히 달랐다."],
+  ["What appears at first to be a straightforward solution may create unforeseen difficulties when applied to a more complicated situation.","처음에는 간단해 보이는 해결책이 더 복잡한 상황에 적용되면 예상하지 못한 어려움을 만들어 낼 수도 있다."],
+  ["Rather than accepting the evidence simply because it supports a familiar explanation, researchers must consider whether alternative interpretations can account for the same results.","연구자들은 익숙한 설명을 뒷받침한다는 이유만으로 증거를 받아들이기보다, 다른 해석도 같은 결과를 설명할 수 있는지를 고려해야 한다."],
+  ["The fact that a particular method has worked effectively in the past does not necessarily mean that it will produce the same outcome under different conditions.","특정 방법이 과거에 효과적으로 작동했다는 사실이 다른 조건에서도 같은 결과를 낳는다는 것을 반드시 의미하는 것은 아니다."],
+  ["People tend to overlook information that conflicts with what they already believe, even when that information deserves closer examination.","사람들은 이미 자신이 믿고 있는 것과 충돌하는 정보가 더 면밀히 검토될 가치가 있을 때조차 그것을 간과하는 경향이 있다."],
+  ["If the assumptions on which an argument is based are left unexamined, a conclusion that seems reasonable may turn out to be less reliable than it initially appeared.","어떤 주장의 근거가 되는 전제들을 검토하지 않은 채 둔다면, 타당해 보이는 결론이 처음에 보였던 것보다 신뢰하기 어려운 것으로 드러날 수 있다."],
+  ["It is not necessarily the amount of information available to us that determines the quality of a decision, but how critically we evaluate the information before using it.","결정의 질을 좌우하는 것은 반드시 우리에게 주어진 정보의 양이 아니라, 그 정보를 사용하기 전에 얼마나 비판적으로 평가하느냐이다."],
+  ["Even when two explanations appear to describe the same phenomenon, the predictions they make may differ in ways that can be tested by further observation.","두 설명이 같은 현상을 묘사하는 것처럼 보여도, 그것들이 내놓는 예측은 추가적인 관찰을 통해 검증할 수 있는 방식으로 서로 다를 수 있다."],
+  ["Because the consequences of a decision may extend beyond the people who make it, evaluating its benefits requires attention to those who are affected indirectly as well.","어떤 결정의 결과가 결정을 내린 사람들을 넘어 확장될 수 있기 때문에, 그 이점을 평가하려면 간접적으로 영향을 받는 사람들에게도 주의를 기울여야 한다."],
+  ["The more confidently a claim is presented, the more carefully we should examine the evidence offered in support of it rather than assuming that confidence itself indicates accuracy.","어떤 주장이 확신에 차서 제시될수록, 자신감 자체가 정확성을 의미한다고 가정하기보다 그 주장을 뒷받침하기 위해 제시된 증거를 더욱 주의 깊게 검토해야 한다."]
+
+const dailyEnglish: [string,string]=DAILY_ENGLISH[Math.floor(Date.now()/3600000)%DAILY_ENGLISH.length];
 `;
 if (!s.includes('const DAILY_ENGLISH')) s = s.replace('const MENU =', daily+'const MENU =');
 
