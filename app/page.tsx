@@ -3,7 +3,8 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Obj = Record<string, any>;
-const MENU = ["🏠 홈", "📤 숙제 내기", "📥 숙제 제출", "❓ 질문게시판", "📅 캘린더", "💬 개인채팅", "🤖 AI 학습도우미", "🔔 알림"];\nconst menuTitle = (v:string) => v.replace(/^[^\\s]+\\s/, "");
+const MENU = ["🏠 홈", "📤 숙제 내기", "📥 숙제 제출", "❓ 질문게시판", "📅 캘린더", "💬 개인채팅", "🤖 AI 학습도우미", "🔔 알림"];
+const menuTitle = (v:string) => v.substring(v.indexOf(" ") + 1);
 const SUBJECTS = ["국어&과학", "수학", "사회", "영어&한국사", "국어"];
 const MAX_FILES = 5, MAX_FILE_SIZE = 10 * 1024 * 1024;
 async function rpc(fn:string,args:Obj={}){const r=await fetch("/api/rpc",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fn,args})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d?.message||d?.error||"요청에 실패했습니다.");return d}
