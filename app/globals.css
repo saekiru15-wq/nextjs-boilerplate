@@ -10,3 +10,41 @@ body{font-family:Arial,Helvetica,sans-serif}
 .modern-dialog{position:relative;display:inline-block}.modern-dialog>summary{list-style:none;cursor:pointer}.modern-dialog>summary::-webkit-details-marker{display:none}.modern-dialog[open]>summary{visibility:hidden}.modern-modal-backdrop{display:none}.modern-dialog[open] .modern-modal-backdrop{display:grid;position:fixed;inset:0;background:rgba(0,0,0,.62);place-items:center;padding:20px;z-index:1000}.modern-modal{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;color:#111;border:1px solid #111;border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.28)}.modern-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:22px 24px;border-bottom:1px solid #111}.modern-modal-body{display:grid;gap:14px;padding:22px 24px}.modern-modal-body label{display:grid;gap:7px;font-weight:700;font-size:14px}.modern-modal-body input,.modern-modal-body textarea,.modern-modal-body select{width:100%;border:1.5px solid #111!important;border-radius:7px;padding:11px 12px;background:#fff;color:#111;outline:none}.modern-modal-body textarea{min-height:110px;resize:vertical}.modern-modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid #111}.modern-close{width:34px;height:34px;border:1px solid #111;background:#fff;color:#111;border-radius:7px;font-size:24px;line-height:1}.submission-dialog{display:block;margin-top:10px}.submission-dialog>summary{display:inline-flex}.modern-modal .file-picker{border:1.5px solid #111;padding:12px;border-radius:8px}
 @media(max-width:600px){.modern-modal-backdrop{padding:10px}.modern-modal{max-height:94vh}.modern-modal-head,.modern-modal-body,.modern-modal-actions{padding-left:16px;padding-right:16px}}
 /* MODERN-BW-THEME */
+
+/* FINAL-CLEAN-DASHBOARD */
+.page-title{display:flex;align-items:center;gap:10px}
+.line-icon{width:21px;height:21px;display:block;flex:none}
+.nav button{display:flex;align-items:center;gap:13px;font-size:15px;color:#222}
+.nav button .line-icon{width:20px;height:20px}
+.nav .active{background:#111!important;color:#fff!important}
+.notification-bell{display:inline-flex;align-items:center;gap:7px}
+.home-dashboard{display:grid;gap:18px}
+.home-top{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(330px,.8fr);gap:18px}
+.sentence-card{min-height:235px;padding:26px}
+.card-title-row{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.card-title-row h2{margin:0;font-size:20px}
+.card-title-row p{margin:5px 0 0}
+.line-icon-wrap{display:grid;place-items:center;width:38px;height:38px;border:1px solid #111;border-radius:10px}
+.daily-sentence-text{font-size:23px;line-height:1.8;font-weight:700;margin:34px 0 0;letter-spacing:-.02em}
+.home-side{display:grid;gap:18px}
+.schedule-card,.progress-card{padding:22px}
+.schedule-list{display:grid;gap:8px;margin:18px 0 12px}
+.schedule-item,.home-task-item{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #ddd;padding:10px 0}
+.schedule-item:last-child,.home-task-item:last-child{border-bottom:0}
+.schedule-item div,.home-task-item div{display:grid;gap:4px;min-width:0}
+.schedule-item span:not(.badge),.home-task-item span:not(.badge){font-size:12px;color:#777}
+.full-btn{width:100%;margin-top:4px}
+.progress-card{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.progress-card h2{margin:0 0 7px}
+.progress-sub{font-size:12px;color:#777;margin:6px 0 0}
+.donut{width:128px;height:128px;flex:none;border-radius:50%;background:conic-gradient(#111 var(--progress),#e2e2e2 var(--progress));display:grid;place-items:center;position:relative}
+.donut:before{content:"";position:absolute;inset:12px;border-radius:50%;background:#fff}
+.donut>div{position:relative;z-index:1;text-align:center;display:grid;gap:2px}
+.donut strong{font-size:25px}
+.donut span{font-size:11px;color:#777}
+.homework-strip,.notice-card{padding:22px}
+.home-task-list{display:grid;gap:0;margin-top:10px}
+.notice-row{margin-top:12px;padding-top:14px;border-top:1px solid #ddd;display:flex;justify-content:space-between;gap:12px}
+.compact{padding:22px 0}
+@media(max-width:1000px){.home-top{grid-template-columns:1fr}.home-side{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.home-side{grid-template-columns:1fr}.daily-sentence-text{font-size:18px;line-height:1.7}.sentence-card{min-height:0}.progress-card{align-items:flex-start}.donut{width:105px;height:105px}.donut:before{inset:10px}.nav button{gap:10px}.notice-row{display:grid}}
