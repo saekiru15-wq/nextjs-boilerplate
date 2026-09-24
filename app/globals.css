@@ -73,3 +73,12 @@ body{font-family:Arial,Helvetica,sans-serif}
 .nav button{position:relative}
 @media(max-width:900px){.home-dashboard{grid-template-columns:1fr}.home-dashboard .daily-card,.home-summary{grid-column:auto}}
 @media(max-width:600px){.home-summary{grid-template-columns:1fr}.home-summary>div{border-right:0;border-bottom:1px solid #ddd}.home-summary>div:last-child{border-bottom:0}.daily-card p{font-size:15px;line-height:1.75}.progress-stat{min-height:170px}.progress-ring{width:96px;height:96px}}
+
+
+/* MENU-INDEX-FIX: 9-item menu */
+.nav button:nth-child(7):before{content:"◇"!important;font-size:21px;font-family:Arial,sans-serif}
+.nav button:nth-child(7):after{content:"데일리 프로젝트"!important}
+.nav button:nth-child(8):before{content:"✦"!important;font-size:21px;font-family:Arial,sans-serif}
+.nav button:nth-child(8):after{content:"AI 학습도우미"!important}
+.nav button:nth-child(9):before{content:"○"!important;font-size:22px;font-family:Arial,sans-serif}
+.nav button:nth-child(9):after{content:"알림"!important}
