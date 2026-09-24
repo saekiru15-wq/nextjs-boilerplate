@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Obj = Record<string, any>;
-const MENU = ["🏠 홈", "📤 숙제 내기", "📥 숙제 제출", "❓ 질문게시판", "📅 캘린더", "💬 개인채팅", "📚 데일리 프로젝트", "🤖 AI 학습도우미", "🔔 알림"];
+const MENU = ["🏠 홈", "📤 숙제 내기", "📥 숙제 제출", "❓ 질문게시판", "📅 캘린더", "💬 개인채팅", "🤖 AI 학습도우미", "🔔 알림"];
 const menuTitle = (v:string) => v.substring(v.indexOf(" ") + 1);
 const menuIcon = (v:string) => ({
   "🏠 홈":"⌂","📤 숙제 내기":"✎","📥 숙제 제출":"⇧","❓ 질문게시판":"?","📅 캘린더":"□","💬 개인채팅":"◌","📚 데일리 프로젝트":"◇","🤖 AI 학습도우미":"✦","🔔 알림":"○"
