@@ -10,3 +10,33 @@ body{font-family:Arial,Helvetica,sans-serif}
 .modern-dialog{position:relative;display:inline-block}.modern-dialog>summary{list-style:none;cursor:pointer}.modern-dialog>summary::-webkit-details-marker{display:none}.modern-dialog[open]>summary{visibility:hidden}.modern-modal-backdrop{display:none}.modern-dialog[open] .modern-modal-backdrop{display:grid;position:fixed;inset:0;background:rgba(0,0,0,.62);place-items:center;padding:20px;z-index:1000}.modern-modal{width:min(620px,100%);max-height:90vh;overflow:auto;background:#fff;color:#111;border:1px solid #111;border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.28)}.modern-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:22px 24px;border-bottom:1px solid #111}.modern-modal-body{display:grid;gap:14px;padding:22px 24px}.modern-modal-body label{display:grid;gap:7px;font-weight:700;font-size:14px}.modern-modal-body input,.modern-modal-body textarea,.modern-modal-body select{width:100%;border:1.5px solid #111!important;border-radius:7px;padding:11px 12px;background:#fff;color:#111;outline:none}.modern-modal-body textarea{min-height:110px;resize:vertical}.modern-modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid #111}.modern-close{width:34px;height:34px;border:1px solid #111;background:#fff;color:#111;border-radius:7px;font-size:24px;line-height:1}.submission-dialog{display:block;margin-top:10px}.submission-dialog>summary{display:inline-flex}.modern-modal .file-picker{border:1.5px solid #111;padding:12px;border-radius:8px}
 @media(max-width:600px){.modern-modal-backdrop{padding:10px}.modern-modal{max-height:94vh}.modern-modal-head,.modern-modal-body,.modern-modal-actions{padding-left:16px;padding-right:16px}}
 /* MODERN-BW-THEME */
+
+/* CLEAN-SIDEBAR-FINAL */
+.nav button{font-size:0!important;display:flex!important;align-items:center;gap:13px!important}
+.nav button:after{font-size:15px;line-height:1}
+.nav button:nth-child(1):before{content:"⌂";font-size:23px;font-family:Arial,sans-serif}
+.nav button:nth-child(1):after{content:"홈"}
+.nav button:nth-child(2):before{content:"✎";font-size:22px;font-family:Arial,sans-serif}
+.nav button:nth-child(2):after{content:"숙제 내기"}
+.nav button:nth-child(3):before{content:"⇧";font-size:22px;font-family:Arial,sans-serif}
+.nav button:nth-child(3):after{content:"숙제 제출"}
+.nav button:nth-child(4):before{content:"?";font-size:21px;font-family:Arial,sans-serif}
+.nav button:nth-child(4):after{content:"질문게시판"}
+.nav button:nth-child(5):before{content:"□";font-size:22px;font-family:Arial,sans-serif}
+.nav button:nth-child(5):after{content:"캘린더"}
+.nav button:nth-child(6):before{content:"◌";font-size:25px;font-family:Arial,sans-serif}
+.nav button:nth-child(6):after{content:"개인채팅"}
+.nav button:nth-child(7):before{content:"✦";font-size:21px;font-family:Arial,sans-serif}
+.nav button:nth-child(7):after{content:"AI 학습도우미"}
+.nav button:nth-child(8):before{content:"♧";font-size:22px;font-family:Arial,sans-serif}
+.nav button:nth-child(8):after{content:"알림"}
+.progress-stat{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.progress-stat strong{display:block;font-size:28px;margin-top:3px}
+.progress-count{display:block;font-size:12px;color:#777;margin-top:4px}
+.progress-ring{width:74px;height:74px;flex:none}
+.progress-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.progress-ring circle{fill:none;stroke-width:4}
+.progress-ring .ring-bg{stroke:#e1e1e1}
+.progress-ring .ring-value{stroke:#111;stroke-linecap:round}
+.progress-ring text{fill:#111;font-size:7px;font-weight:700;transform:rotate(90deg);transform-origin:22px 22px}
+@media(max-width:900px){.nav button{justify-content:center}.nav button:after{display:none}}
