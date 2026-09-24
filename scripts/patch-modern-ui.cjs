@@ -1,7 +1,7 @@
 const fs=require("fs"),path=require("path");
 const f=path.join(process.cwd(),"app","page.tsx");
 let page=fs.readFileSync(f,"utf8");
-page=page.replace(/<button className="logout"[^>]*>↪ 로그아웃<\\/button>/g,"");
+page=page.replace(new RegExp(`<button className="logout"[^>]*>↪ 로그아웃</button>`,"g"),"");
 fs.writeFileSync(f,page);
 const cssFile=path.join(process.cwd(),"app","globals.css");
 let css=fs.readFileSync(cssFile,"utf8");
