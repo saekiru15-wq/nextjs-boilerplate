@@ -5,7 +5,10 @@ let s = fs.readFileSync(file, 'utf8');
 
 const homeRe = /\{active===\"🏠 홈\"&&[\s\S]*?\}\s*\{active===\"📤 숙제 내기\"/;
 const home = `{active===\"🏠 홈\"&&<><section className=\"hero\"><h2>오늘의 영어 문장</h2><div className=\"daily-english\"><b>{dailyEnglish[0]}</b><p>{dailyEnglish[1]}</p></div></section><div className=\"grid\"><Stat label=\"제출할 숙제\" value={assignedTasks.length} icon=\"📝\"/><Stat label=\"내가 낸 숙제\" value={createdTasks.length} icon=\"📤\"/><Stat label=\"완료\" value={assignedTasks.filter((t:any)=>(t.statusByUser?.[me]||\"미제출\")==\=\"완료\").length} icon=\"✅\"/><Stat label=\"새 알림\" value={notifications.filter((n:any)=>!n.read).length} icon=\"🔔\"/></div><section className=\"card\"><div className=\"section-title\"><div><h2>⏰ 가장 임박한 숙제</h2><p className=\"muted\">마감일이 가까운 숙제 3개입니다.</p></div><button className=\"outline\" onClick={()=>setActive(\"📥 숙제 제출\")}>숙제 제출로 이동</button></div><UpcomingTasks tasks={assignedTasks} users={users} me={me}/></section></>} {active===\"📤 숙제 내기\"`;
-if (!s.includes("function HomeDashboard")) {\n  if (!homeRe.test(s)) throw new Error("home block not found");\n  s = s.replace(homeRe, home);\n}
+if (!s.includes("function HomeDashboard")) {
+  if (!homeRe.test(s)) throw new Error("home block not found");
+  s = s.replace(homeRe, home);
+}
 
 const daily = `const DAILY_ENGLISH: [string,string][]=[
   ["Although the policy was intended to reduce inequality, its effects varied considerably depending on the circumstances in which it was implemented.","그 정책은 불평등을 줄이기 위한 것이었지만, 그것이 시행된 상황에 따라 그 효과는 상당히 달랐다."],
