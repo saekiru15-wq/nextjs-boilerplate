@@ -17,11 +17,10 @@ if(!s.includes("const[taskFilter,setTaskFilter]")){
   );
 }
 
-if(!s.includes("allAssignedTasks=tasks.filter")){
-  s=s.replace(
-    'currentUser=users.find((u:any)=>u.id===me),assignedTasks=tasks.filter((t:any)=>Array.isArray(t.assigneeIds)&&t.assigneeIds.includes(me)),createdTasks=tasks.filter((t:any)=>t.creatorId===me);',
-    'currentUser=users.find((u:any)=>u.id===me),assignedTasks=tasks.filter((t:any)=>Array.isArray(t.assigneeIds)&&t.assigneeIds.includes(me)),allAssignedTasks=tasks.filter((t:any)=>Array.isArray(t.assigneeIds)&&t.assigneeIds.includes(me)),createdTasks=tasks.filter((t:any)=>t.creatorId===me),filteredAssignedTasks=assignedTasks.filter((t:any)=>subjectMatches(t,taskFilter)),filteredCreatedTasks=createdTasks.filter((t:any)=>subjectMatches(t,createdTaskFilter)),filteredQuestions=questions.filter((q:any)=>subjectMatches(q,questionFilter));'
-  );
+if(!s.includes("const allAssignedTasks=")){
+  const marker=/currentUser=users\\.find\\(\\(u:any\\)=>u\\.id===me\\)[\\s\\S]*?createdTasks=tasks\\.filter\\(\\(t:any\\)=>t\\.creatorId===me\\);/;
+  const replacement='currentUser=users.find((u:any)=>u.id===me),assignedTasks=tasks.filter((t:any)=>Array.isArray(t.assigneeIds)&&t.assigneeIds.includes(me)&&(!t.due||String(t.due)>=nowKey||((t.statusByUser?.[me]||"미제출").trim()!=="미제출"))),overdueTasks=tasks.filter((t:any)=>Array.isArray(t.assigneeIds)&&t.assigneeIds.includes(me)&&String(t.due||"")<nowKey&&(t.statusByUser?.[me]||"미제출").trim()==="미제출"),allAssignedTasks=tasks.filter((t:any)=>Array.isArray(t.assigneeIds)&&t.assigneeIds.includes(me)),createdTasks=tasks.filter((t:any)=>t.creatorId===me),filteredAssignedTasks=assignedTasks.filter((t:any)=>subjectMatches(t,taskFilter)),filteredCreatedTasks=createdTasks.filter((t:any)=>subjectMatches(t,createdTaskFilter)),filteredQuestions=questions.filter((q:any)=>subjectMatches(q,questionFilter));';
+  if(marker.test(s)) s=s.replace(marker,replacement);
 }
 
 const tabs='function SubjectTabs({value,onChange}:{value:string;onChange:(v:string)=>void}){return <div className="subject-tabs" role="tablist">{BOARD_SUBJECTS.map(s=><button type="button" key={s} className={value===s?"active":""} onClick={()=>onChange(s)}>{s}</button>)}</div>}\n';
