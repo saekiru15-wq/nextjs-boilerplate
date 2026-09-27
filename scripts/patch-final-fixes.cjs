@@ -16,6 +16,13 @@ if(!s.includes('active==="📌 밀린 숙제"')){
 }
 if(!s.includes('filteredOverdueTasks=')) s=s.replace('filteredQuestions=questions.filter((q:any)=>subjectMatches(q,questionFilter));','filteredQuestions=questions.filter((q:any)=>subjectMatches(q,questionFilter)),filteredOverdueTasks=overdueTasks.filter((t:any)=>subjectMatches(t,taskFilter));');
 s=s.replace('tasks={overdueTasks.filter((t:any)=>subjectMatches(t,taskFilter))}','tasks={filteredOverdueTasks}');
+
+// Ensure the dedicated overdue menu item exists in the actual MENU array.
+if(!s.match(/const MENU = \[[^\]]*📌 밀린 숙제/)){
+  s=s.replace('const MENU = [','const MENU = ["📌 밀린 숙제",');
+}
+// Keep the dashboard's allAssignedTasks prop wired after earlier patches.
+s=s.replace('{active==="🏠 홈"&&<HomeDashboard assignedTasks={assignedTasks} createdTasks={createdTasks} notifications={notifications} me={me} users={users}/>}','{active==="🏠 홈"&&<HomeDashboard assignedTasks={assignedTasks} allAssignedTasks={allAssignedTasks} createdTasks={createdTasks} notifications={notifications} me={me} users={users}/>}');
 fs.writeFileSync(page,s);
 let css=fs.readFileSync(cssFile,'utf8');
 if(!css.includes('FINAL-PURPLE-AND-DARK-THEME')){
