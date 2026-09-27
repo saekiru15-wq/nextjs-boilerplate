@@ -15,7 +15,7 @@ if(!s.includes("FINAL-INTEGRATION-v1")){
   if(!s.includes("[taskFilter,setTaskFilter]")){
     s=s.replace(
       'const[id,setId]=useState(""),[pw,setPw]=useState(""),[name,setName]=useState(""),[subject,setSubject]=useState(SUBJECTS[0]);',
-      'const[id,setId]=useState(""),[pw,setPw]=useState(""),[name,setName]=useState(""),[subject,setSubject]=useState(SUBJECTS[0]);\n const[taskFilter,setTaskFilter]=useState("전체"),[createdTaskFilter,setCreatedTaskFilter]=useState("전체"),[questionFilter,setQuestionFilter]=useState("전체");\n const[darkMode,setDarkMode]=useState(false);'
+      'const[id,setId]=useState(""),[pw,setPw]=useState(""),[name,setName]=useState(""),[subject,setSubject]=useState(SUBJECTS[0]);\n const[taskFilter,setTaskFilter]=useState("전체"),[createdTaskFilter,setCreatedTaskFilter]=useState("전체"),[questionFilter,setQuestionFilter]=useState("전체");\n'
     );
   }
 
