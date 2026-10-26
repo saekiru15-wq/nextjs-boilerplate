@@ -7,6 +7,13 @@ const geist = Geist({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "학습 멘토링",
   description: "숙제, 질문, 일정, 채팅과 AI 학습도우미를 한곳에서 관리하는 학습 멘토링 플랫폼",
+  applicationName: "학습 멘토링",
+  manifest: "/manifest.json",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "학습 멘토링" },
+  icons: {
+    icon: [{ url: "/icons/pwa-192.svg", type: "image/svg+xml", sizes: "192x192" }],
+    apple: [{ url: "/icons/pwa-192.svg", type: "image/svg+xml", sizes: "192x192" }],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
