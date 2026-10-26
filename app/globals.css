@@ -128,3 +128,42 @@ input:focus,textarea:focus,select:focus{border-color:#111!important;outline:2px 
 .bubble.mine{background:#111!important;color:#fff!important;border-color:#111!important}
 .chat-compose{border-top:1px solid #111!important;padding-top:12px!important}
 .modern-modal,.modern-dialog .modern-modal{border-radius:2px!important}
+
+
+.daily-project-card{padding:0;overflow:hidden}
+.daily-project-list{display:grid}
+.daily-project-word{display:grid;grid-template-columns:42px minmax(120px,.8fr) 1.8fr;gap:14px;align-items:center;padding:16px;border-bottom:1px solid var(--line)}
+.daily-project-word:last-child{border-bottom:0}
+.daily-project-word>span:first-child{color:var(--muted)}
+.daily-project-word>span:last-child{color:var(--muted)}
+.daily-quiz-launch{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px;border-top:1px solid var(--line);background:var(--card)}
+.daily-quiz-launch p{margin:5px 0 0}
+.daily-quiz{display:grid;gap:14px}
+.daily-quiz-progress{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 4px}
+.daily-quiz-question{min-width:0;margin:0;padding:18px 20px;border:1px solid var(--line)}
+.daily-quiz-question legend{padding:0 8px 0 0;font-size:1.08rem}
+.daily-quiz-number{display:inline-grid;place-items:center;width:30px;height:30px;margin-right:10px;border-radius:9px;background:var(--surface-2,var(--line));font-size:.9rem}
+.daily-quiz-options{display:grid;gap:8px;margin-top:10px}
+.daily-quiz-option{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;line-height:1.5}
+.daily-quiz-option.selected{border-color:var(--text);background:var(--surface-2,rgba(127,127,127,.12))}
+.daily-quiz-option input{margin-top:5px;accent-color:var(--text);flex:0 0 auto}
+.daily-quiz-letter{font-weight:600;flex:0 0 auto}
+.daily-quiz-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:10px}
+.daily-quiz-result{text-align:center;padding:34px 22px}
+.daily-score-label{color:var(--muted);font-weight:600}
+.daily-score{font-size:4rem;font-weight:800;line-height:1.25;margin:12px 0}
+.daily-score span{font-size:1.4rem;color:var(--muted);font-weight:600}
+.daily-quiz-result .daily-quiz-actions{justify-content:center;margin-top:24px}
+.daily-wrong-list{padding:22px}
+.daily-wrong-word{padding:16px 0;border-top:1px solid var(--line)}
+.daily-wrong-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.daily-wrong-word p{margin:8px 0 0;line-height:1.6}
+@media(max-width:600px){
+ .daily-project-word{grid-template-columns:30px minmax(0,1fr);gap:6px 10px;padding:13px}
+ .daily-project-word>span:last-child{grid-column:2}
+ .daily-quiz-launch{align-items:stretch;flex-direction:column;padding:16px}
+ .daily-quiz-progress{align-items:flex-start;flex-direction:column}
+ .daily-quiz-question{padding:15px}
+ .daily-quiz-actions>*{flex:1}
+ .daily-score{font-size:3.3rem}
+}
