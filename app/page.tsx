@@ -25,6 +25,7 @@ export default function Home(){
  const[qSubject,setQSubject]=useState(SUBJECTS[0]),[qTitle,setQTitle]=useState(""),[qBody,setQBody]=useState("");
  const[chatUser,setChatUser]=useState(""),[chatText,setChatText]=useState(""),[chatFiles,setChatFiles]=useState<File[]>([]);
  const[submitFiles,setSubmitFiles]=useState<Record<string,File[]>>({}),[submitMemo,setSubmitMemo]=useState<Record<string,string>>({}),[submitTitle,setSubmitTitle]=useState<Record<string,string>>({}),[submitBody,setSubmitBody]=useState<Record<string,string>>({});
+ // dailyWords legacy loader replaced; daily-vocab-400.json is superseded by the complete 2200-word dataset.
  const[dailyProjectWords,setDailyProjectWords]=useState<{word:string;meaning:string;section?:string;number?:number}[]>([]),[dailyProjectLoading,setDailyProjectLoading]=useState(false),[dailyProjectLoaded,setDailyProjectLoaded]=useState(false);
  const[aiText,setAiText]=useState(""),[aiMessages,setAiMessages]=useState<{role:string;content:string}[]>([]),[aiBusy,setAiBusy]=useState(false),[month,setMonth]=useState(new Date()),[calendar,setCalendar]=useState<any[]>([]),[progress,setProgress]=useState("");
  const toast=(msg:string)=>{setError(msg);window.setTimeout(()=>setError(v=>v===msg?"":v),3000)};
