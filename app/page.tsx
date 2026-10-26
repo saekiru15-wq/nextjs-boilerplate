@@ -68,12 +68,13 @@ function Chat({users,messages,me,selected,setSelected,text,setText,files,setFile
 
 function DailyProject({words,loading}:{words:{word:string;meaning:string;section?:string;number?:number}[];loading:boolean}){
  const today=new Date().toISOString().slice(0,10);
- const daily=useMemo(()=>{if(!words.length)return[];let seed=2166136261;for(const ch of today)seed=Math.imul(seed^ch.charCodeAt(0),16777619)>>>0;const pool=words.map((_,i)=>i),out:{word:string;meaning:string;section?:string;number?:number}[]=[];while(pool.length&&out.length<30){seed=(Math.imul(seed,1664525)+1013904223)>>>0;out.push(words[pool.splice(seed%pool.length,1)[0]])}return out},[words,today]);
+ const normalizedWords=useMemo(()=>words.map(v=>{const raw=String(v.word||"").trim(),meaningRaw=String(v.meaning||"").trim(),at=raw.search(/[가-힣]/);if(at<0)return {...v,word:raw,meaning:meaningRaw};const cleanWord=raw.slice(0,at).trim().replace(/[,\s]+$/,"")||raw;const tail=raw.slice(at).trim().replace(/^[,，\s]+/,"").replace(/[,，]\s*$/,"");const particle=/^~?(을|를|에|의|와|과|로|에서|에게|으로|한테|까지|부터|만|도|보다)$/.test(tail.replace(/\s/g,""));const meaning=tail&&!particle&&!meaningRaw.includes(tail)?[tail,meaningRaw].filter(Boolean).join(", "):meaningRaw;return {...v,word:cleanWord,meaning}},[words]);
+ const daily=useMemo(()=>{if(!normalizedWords.length)return[];let seed=2166136261;for(const ch of today)seed=Math.imul(seed^ch.charCodeAt(0),16777619)>>>0;const pool=normalizedWords.map((_,i)=>i),out:{word:string;meaning:string;section?:string;number?:number}[]=[];while(pool.length&&out.length<30){seed=(Math.imul(seed,1664525)+1013904223)>>>0;out.push(normalizedWords[pool.splice(seed%pool.length,1)[0]])}return out},[normalizedWords,today]);
  const[mode,setMode]=useState<"main"|"quiz"|"result"|"wrong">("main");
  const[quiz,setQuiz]=useState<{word:string;meaning:string;section?:string;number?:number;options:string[];answer:string}[]>([]);
  const[answers,setAnswers]=useState<Record<number,string>>({});
  const shuffleList=<T,>(items:T[]):T[]=>{const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out};
- const usable=useMemo(()=>words.filter(v=>v.word?.trim()&&v.meaning?.trim()),[words]);
+ const usable=useMemo(()=>normalizedWords.filter(v=>v.word?.trim()&&v.meaning?.trim()),[normalizedWords]);
  function startQuiz(){
   if(daily.length!==30||usable.length<5)return;
   const next=shuffleList(daily).map(target=>{
