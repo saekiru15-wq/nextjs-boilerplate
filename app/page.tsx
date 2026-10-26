@@ -77,6 +77,7 @@ function DailyProject({words,loading}:{words:{word:string;meaning:string;section
  const[memoryQueue,setMemoryQueue]=useState<{word:string;meaning:string;section?:string;number?:number;memoryKey:number}[]>([]);
  const[memoryRetry,setMemoryRetry]=useState<{word:string;meaning:string;section?:string;number?:number;memoryKey:number}[]>([]);
  const[memoryRevealed,setMemoryRevealed]=useState(false);
+ const[memoryKnownCount,setMemoryKnownCount]=useState(0);
  const shuffleList=<T,>(items:T[]):T[]=>{const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out};
  const usable=useMemo(()=>normalizedWords.filter(v=>v.word?.trim()&&v.meaning?.trim()),[normalizedWords]);
  function makeQuestions(items:{word:string;meaning:string;section?:string;number?:number}[]){
@@ -87,16 +88,16 @@ function DailyProject({words,loading}:{words:{word:string;meaning:string;section
  function chooseAnswer(option:string){const current=questionIndex;setAnswers(prev=>({...prev,[current]:option}));if(current>=quiz.length-1)setMode("result");else setQuestionIndex(current+1)}
  const score=quiz.reduce((sum,q,i)=>sum+(answers[i]===q.answer?1:0),0);
  const wrong=quiz.map((q,i)=>({...q,chosen:answers[i],index:i})).filter(q=>q.chosen!==q.answer);
- function startMemorize(){setMemoryQueue(shuffleList(daily.map((v,i)=>({...v,memoryKey:i}))));setMemoryRetry([]);setMemoryRevealed(false);setMode("memorize")}
+ function startMemorize(){setMemoryQueue(shuffleList(daily.map((v,i)=>({...v,memoryKey:i}))));setMemoryRetry([]);setMemoryRevealed(false);setMemoryKnownCount(0);setMode("memorize")}
  function markMemory(known:boolean){
   if(!memoryQueue.length)return;
-  const current=memoryQueue[0],rest=memoryQueue.slice(1),retry=known?memoryRetry:[...memoryRetry,current];
+  const current=memoryQueue[0],rest=memoryQueue.slice(1),retry=known?memoryRetry:[...memoryRetry,current];if(known)setMemoryKnownCount(count=>count+1);
   setMemoryRevealed(false);
   if(rest.length){setMemoryQueue(rest);setMemoryRetry(retry);return}
   if(retry.length){setMemoryQueue(shuffleList(retry));setMemoryRetry([]);return}
   setMemoryQueue([]);setMemoryRetry([]);setMode("memorizeDone")
  }
- function backToMain(){setMode("main");setAnswers({});setQuiz([]);setQuestionIndex(0);setMemoryQueue([]);setMemoryRetry([]);setMemoryRevealed(false)}
+ function backToMain(){setMode("main");setAnswers({});setQuiz([]);setQuestionIndex(0);setMemoryQueue([]);setMemoryRetry([]);setMemoryRevealed(false);setMemoryKnownCount(0)}
  const currentQuestion=quiz[questionIndex];
  const currentMemory=memoryQueue[0];
  return <section className="daily-project">
@@ -112,7 +113,7 @@ function DailyProject({words,loading}:{words:{word:string;meaning:string;section
   {mode==="result"&&<section className="card daily-quiz-result"><div className="daily-score-label">단어 테스트 결과</div><div className="daily-score">{score}<span> / {quiz.length}</span></div><p>{score===quiz.length?"완벽해요! 모든 문제를 맞혔어요.":quiz.length+"문항 중 "+score+"개를 맞혔어요. 틀린 단어를 다시 확인해 보세요."}</p><div className="daily-quiz-actions"><button className="outline" type="button" onClick={backToMain}>뒤로 가기</button><button className="outline" type="button" onClick={()=>setMode("wrong")}>틀린 단어 보기 ({wrong.length})</button>{wrong.length>0&&<button className="primary" type="button" onClick={startWrongQuiz}>틀린 단어 재시험</button>}</div></section>}
   {mode==="wrong"&&<section className="card daily-wrong-list"><div className="section-heading"><div><h3>틀린 단어</h3><p className="muted">틀린 단어와 정답을 확인하고 다시 시험 볼 수 있어요.</p></div><span className="badge">{wrong.length}개</span></div>{wrong.length?wrong.map(q=><article className="daily-wrong-word" key={q.index}><div className="daily-wrong-head"><b>{q.word}</b><span className="badge red">오답</span></div><p><span className="muted">내가 고른 답</span>　{q.chosen||"무응답"}</p><p><span className="muted">정답</span>　<strong>{q.answer}</strong></p></article>):<p>틀린 단어가 없습니다. 모두 정답이에요!</p>}<div className="daily-quiz-actions"><button className="outline" type="button" onClick={backToMain}>뒤로 가기</button>{wrong.length>0&&<button className="primary" type="button" onClick={startWrongQuiz}>틀린 단어 재시험</button>}</div></section>}
   {mode==="memorize"&&currentMemory&&<section className="daily-memorize">
-   <div className="daily-quiz-progress"><b>암기 {30-memoryQueue.length} / 30</b><span className="muted">모른다고 한 단어는 한 바퀴가 끝난 뒤 다시 나와요. 남은 단어 {memoryQueue.length}개 · 이번 순환 후 재확인 {memoryRetry.length}개</span></div>
+   <div className="daily-quiz-progress"><b>안다고 확인한 단어 {memoryKnownCount} / 30</b><span className="muted">모른다고 한 단어는 한 바퀴가 끝난 뒤 다시 나와요. 남은 단어 {memoryQueue.length}개 · 이번 순환 후 재확인 {memoryRetry.length}개</span></div>
    <div className="card daily-memory-card"><button type="button" className={"daily-memory-word"+(memoryRevealed?" revealed":"")} onClick={()=>setMemoryRevealed(true)} aria-expanded={memoryRevealed}>{currentMemory.word}<span>{memoryRevealed?"뜻 확인됨":"눌러서 뜻 보기"}</span></button>{memoryRevealed&&<div className="daily-memory-meaning">{currentMemory.meaning}</div>}{memoryRevealed&&<div className="daily-memory-actions"><button type="button" className="daily-memory-known" onClick={()=>markMemory(true)}>O　안다</button><button type="button" className="daily-memory-unknown" onClick={()=>markMemory(false)}>X　모른다</button></div>}<div className="daily-memory-hint muted">{memoryRevealed?"뜻을 확인한 뒤 안다/모른다를 선택하세요.":"영어 단어를 클릭해 뜻을 확인하세요."}</div></div>
    <div className="daily-quiz-actions"><button className="outline" type="button" onClick={backToMain}>뒤로 가기</button></div>
   </section>}
