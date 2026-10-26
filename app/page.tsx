@@ -66,14 +66,12 @@ function Calendar({month,setMonth,events}:{month:Date;setMonth:(d:Date)=>void;ev
 function Chat({users,messages,me,selected,setSelected,text,setText,files,setFiles,send}:{users:any[];messages:any[];me:string;selected:string;setSelected:(v:string)=>void;text:string;setText:(v:string)=>void;files:File[];setFiles:(v:File[])=>void;send:()=>void}){const visible=messages.filter((m:any)=>selected&&(m.from===selected||m.to===selected));const other=users.find((u:any)=>u.id===selected);const messagesRef=useRef<HTMLDivElement>(null);useEffect(()=>{const el=messagesRef.current;if(el)el.scrollTop=el.scrollHeight},[selected,visible.length]);return <section className="card chat"><div className="chat-users"><h3>대화 상대</h3>{users.filter((u:any)=>u.id!==me).map((u:any)=><button key={u.id} className={selected===u.id?"selected":""} onClick={()=>setSelected(u.id)}><span>{u.name} ({u.subject})</span><small>{u.id}</small></button>)}</div><div className="chat-main"><div className="chat-title">{other?`${other.name} (${other.subject})`:`대화 상대를 선택하세요`}{other&&<span className="muted smalltext"> · {other.id}</span>}</div><div className="messages" ref={messagesRef}>{visible.length?visible.map((m:any)=><div key={m.id} className={m.from===me?"bubble mine":"bubble"}><div>{m.text||m.body}</div><AttachmentList attachments={m.attachments}/><small>{m.at||""}</small></div>):<Empty text={selected?"아직 메시지가 없습니다.":"대화 상대를 선택하세요."}/>}</div><div className="chat-compose"><input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}}} placeholder="메시지를 입력하세요"/><FilePicker files={files} setFiles={setFiles}/><button className="primary small" onClick={send}>전송</button></div></div></section>}
 
 
-type DailyVocab = {word:string;meaning:string;section?:string;number?:number};
-type QuizQuestion = DailyVocab & {options:string[];answer:string};
 function shuffleList<T,>(items:T[]):T[]{const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out}
-function DailyProject({words,loading}:{words:DailyVocab[];loading:boolean}){
+function DailyProject({words,loading}:{words:{word:string;meaning:string;section?:string;number?:number}[];loading:boolean}){
  const today=new Date().toISOString().slice(0,10);
- const daily=useMemo(()=>{if(!words.length)return[];let seed=2166136261;for(const ch of today)seed=Math.imul(seed^ch.charCodeAt(0),16777619)>>>0;const pool=words.map((_,i)=>i),out:DailyVocab[]=[];while(pool.length&&out.length<30){seed=(Math.imul(seed,1664525)+1013904223)>>>0;out.push(words[pool.splice(seed%pool.length,1)[0]])}return out},[words,today]);
+ const daily=useMemo(()=>{if(!words.length)return[];let seed=2166136261;for(const ch of today)seed=Math.imul(seed^ch.charCodeAt(0),16777619)>>>0;const pool=words.map((_,i)=>i),out:{word:string;meaning:string;section?:string;number?:number}[]=[];while(pool.length&&out.length<30){seed=(Math.imul(seed,1664525)+1013904223)>>>0;out.push(words[pool.splice(seed%pool.length,1)[0]])}return out},[words,today]);
  const[mode,setMode]=useState<"main"|"quiz"|"result"|"wrong">("main");
- const[quiz,setQuiz]=useState<QuizQuestion[]>([]);
+ const[quiz,setQuiz]=useState<{word:string;meaning:string;section?:string;number?:number;options:string[];answer:string}[]>([]);
  const[answers,setAnswers]=useState<Record<number,string>>({});
  const usable=useMemo(()=>words.filter(v=>v.word?.trim()&&v.meaning?.trim()),[words]);
  function startQuiz(){
