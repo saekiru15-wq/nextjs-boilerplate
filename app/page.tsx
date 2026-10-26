@@ -70,33 +70,52 @@ function DailyProject({words,loading}:{words:{word:string;meaning:string;section
  const today=new Date().toISOString().slice(0,10);
  const normalizedWords=useMemo(()=>words.map(v=>{const raw=String(v.word||"").trim(),meaningRaw=String(v.meaning||"").trim(),at=raw.search(/[가-힣]/);if(at<0)return {...v,word:raw,meaning:meaningRaw};const cleanWord=raw.slice(0,at).trim().replace(/[,\s]+$/,"")||raw;const tail=raw.slice(at).trim().replace(/^[,，\s]+/,"").replace(/[,，]\s*$/,"");const particle=/^~?(을|를|에|의|와|과|로|에서|에게|으로|한테|까지|부터|만|도|보다)$/.test(tail.replace(/\s/g,""));const meaning=tail&&!particle&&!meaningRaw.includes(tail)?[tail,meaningRaw].filter(Boolean).join(", "):meaningRaw;return {...v,word:cleanWord,meaning}}),[words]);
  const daily=useMemo(()=>{if(!normalizedWords.length)return[];let seed=2166136261;for(const ch of today)seed=Math.imul(seed^ch.charCodeAt(0),16777619)>>>0;const pool=normalizedWords.map((_,i)=>i),out:{word:string;meaning:string;section?:string;number?:number}[]=[];while(pool.length&&out.length<30){seed=(Math.imul(seed,1664525)+1013904223)>>>0;out.push(normalizedWords[pool.splice(seed%pool.length,1)[0]])}return out},[normalizedWords,today]);
- const[mode,setMode]=useState<"main"|"quiz"|"result"|"wrong">("main");
+ const[mode,setMode]=useState<"main"|"quiz"|"result"|"wrong"|"memorize"|"memorizeDone">("main");
  const[quiz,setQuiz]=useState<{word:string;meaning:string;section?:string;number?:number;options:string[];answer:string}[]>([]);
  const[answers,setAnswers]=useState<Record<number,string>>({});
+ const[questionIndex,setQuestionIndex]=useState(0);
+ const[memoryQueue,setMemoryQueue]=useState<{word:string;meaning:string;section?:string;number?:number;memoryKey:number}[]>([]);
+ const[memoryRetry,setMemoryRetry]=useState<{word:string;meaning:string;section?:string;number?:number;memoryKey:number}[]>([]);
+ const[memoryRevealed,setMemoryRevealed]=useState(false);
  const shuffleList=<T,>(items:T[]):T[]=>{const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out};
  const usable=useMemo(()=>normalizedWords.filter(v=>v.word?.trim()&&v.meaning?.trim()),[normalizedWords]);
- function startQuiz(){
-  if(daily.length!==30||usable.length<5)return;
-  const next=shuffleList(daily).map(target=>{
-   const distractors=shuffleList(Array.from(new Set(usable.map(v=>v.meaning.trim()).filter(m=>m&&m!==target.meaning.trim())))).slice(0,4);
-   return {...target,answer:target.meaning.trim(),options:shuffleList([target.meaning.trim(),...distractors])};
-  });
-  setQuiz(next);setAnswers({});setMode("quiz");
+ function makeQuestions(items:{word:string;meaning:string;section?:string;number?:number}[]){
+  return shuffleList(items).map(target=>{const answer=target.meaning.trim();const distractors=shuffleList(Array.from(new Set(usable.map(v=>v.meaning.trim()).filter(m=>m&&m!==answer)))).slice(0,4);return {...target,answer,options:shuffleList([answer,...distractors])}});
  }
+ function startQuiz(){if(daily.length!==30||usable.length<5)return;setQuiz(makeQuestions(daily));setAnswers({});setQuestionIndex(0);setMode("quiz")}
+ function startWrongQuiz(){const missed=quiz.map((q,i)=>({...q,index:i})).filter(q=>answers[q.index]!==q.answer);if(!missed.length)return;setQuiz(makeQuestions(missed));setAnswers({});setQuestionIndex(0);setMode("quiz")}
+ function chooseAnswer(option:string){const current=questionIndex;setAnswers(prev=>({...prev,[current]:option}));if(current>=quiz.length-1)setMode("result");else setQuestionIndex(current+1)}
  const score=quiz.reduce((sum,q,i)=>sum+(answers[i]===q.answer?1:0),0);
  const wrong=quiz.map((q,i)=>({...q,chosen:answers[i],index:i})).filter(q=>q.chosen!==q.answer);
- function backToMain(){setMode("main");setAnswers({});setQuiz([])}
+ function startMemorize(){setMemoryQueue(shuffleList(daily.map((v,i)=>({...v,memoryKey:i}))));setMemoryRetry([]);setMemoryRevealed(false);setMode("memorize")}
+ function markMemory(known:boolean){
+  if(!memoryQueue.length)return;
+  const current=memoryQueue[0],rest=memoryQueue.slice(1),retry=known?memoryRetry:[...memoryRetry,current];
+  setMemoryRevealed(false);
+  if(rest.length){setMemoryQueue(rest);setMemoryRetry(retry);return}
+  if(retry.length){setMemoryQueue(shuffleList(retry));setMemoryRetry([]);return}
+  setMemoryQueue([]);setMemoryRetry([]);setMode("memorizeDone")
+ }
+ function backToMain(){setMode("main");setAnswers({});setQuiz([]);setQuestionIndex(0);setMemoryQueue([]);setMemoryRetry([]);setMemoryRevealed(false)}
+ const currentQuestion=quiz[questionIndex];
+ const currentMemory=memoryQueue[0];
  return <section className="daily-project">
-  <div className="section-heading"><div><h2>📚 데일리 프로젝트</h2><p className="muted">{mode==="main"?"오늘의 랜덤 영단어 30개":mode==="quiz"?"오늘의 단어 테스트":"테스트 결과"}</p></div><span className="badge green">{today}</span></div>
+  <div className="section-heading"><div><h2>📚 데일리 프로젝트</h2><p className="muted">{mode==="main"?"오늘의 랜덤 영단어 30개":mode==="quiz"?"단어 테스트":mode==="memorize"?"단어 암기":mode==="memorizeDone"?"암기 완료":"테스트 결과"}</p></div><span className="badge green">{today}</span></div>
   {mode==="main"&&<section className="card daily-project-card">
-   {loading?<Empty text="단어를 불러오는 중입니다..."/>:daily.length===30?<><div className="daily-project-list">{daily.map((v,i)=><div className="daily-project-word" key={i}><span>{i+1}</span><b>{v.word}</b><span>{v.meaning}</span></div>)}</div><div className="daily-quiz-launch"><div><b>오늘의 단어 테스트</b><p className="muted">오늘의 단어 30개를 순서와 선택지를 섞어 확인해 보세요.</p></div><button className="primary" type="button" onClick={startQuiz}>단어 테스트 시작하기</button></div></>:<Empty text="단어장을 불러오지 못했습니다. 잠시 후 새로고침해 주세요."/>}
+   {loading?<Empty text="단어를 불러오는 중입니다..."/>:daily.length===30?<><div className="daily-project-list">{daily.map((v,i)=><div className="daily-project-word" key={i}><span>{i+1}</span><b>{v.word}</b><span>{v.meaning}</span></div>)}</div><div className="daily-quiz-launch"><div><b>오늘의 단어 학습</b><p className="muted">30개 단어를 암기하거나 한 문제씩 테스트해 보세요.</p></div><div className="daily-launch-buttons"><button className="outline" type="button" onClick={startMemorize}>암기하기</button><button className="primary" type="button" onClick={startQuiz}>단어 테스트 시작하기</button></div></div></>:<Empty text="단어장을 불러오지 못했습니다. 잠시 후 새로고침해 주세요."/>}
   </section>}
-  {mode==="quiz"&&<form className="daily-quiz" onSubmit={e=>{e.preventDefault();if(quiz.length===30&&Object.keys(answers).length===30)setMode("result")}}>
-   <div className="daily-quiz-progress"><b>{Object.keys(answers).length} / {quiz.length} 문항 응답</b><span className="muted">각 영어 단어에 알맞은 뜻을 하나 고르세요.</span></div>
-   {quiz.map((q,i)=><fieldset className="card daily-quiz-question" key={i}><legend><span className="daily-quiz-number">{i+1}</span><strong>{q.word}</strong></legend><div className="daily-quiz-options">{q.options.map((option,j)=><label className={"daily-quiz-option"+(answers[i]===option?" selected":"")} key={j}><input type="radio" name={"daily-quiz-"+i} value={option} checked={answers[i]===option} onChange={()=>setAnswers(prev=>({...prev,[i]:option}))}/><span className="daily-quiz-letter">{["①","②","③","④","⑤"][j]}</span><span>{option}</span></label>)}</div></fieldset>)}
-   <div className="daily-quiz-actions"><button className="outline" type="button" onClick={backToMain}>뒤로 가기</button><button className="primary" type="submit" disabled={Object.keys(answers).length!==30}>채점하기 ({Object.keys(answers).length}/30)</button></div>
-  </form>}
-  {mode==="result"&&<section className="card daily-quiz-result"><div className="daily-score-label">오늘의 단어 테스트 결과</div><div className="daily-score">{score}<span> / {quiz.length}</span></div><p>{score===30?"완벽해요! 30개를 모두 맞혔어요.":"30문항 중 "+score+"개를 맞혔어요. 틀린 단어를 다시 확인해 보세요."}</p><div className="daily-quiz-actions"><button className="outline" type="button" onClick={backToMain}>뒤로 가기</button><button className="primary" type="button" onClick={()=>setMode("wrong")}>틀린 단어 보기 ({wrong.length})</button></div></section>}
-  {mode==="wrong"&&<section className="card daily-wrong-list"><div className="section-heading"><div><h3>틀린 단어</h3><p className="muted">틀린 단어와 정답을 확인하세요.</p></div><span className="badge">{wrong.length}개</span></div>{wrong.length?wrong.map(q=><article className="daily-wrong-word" key={q.index}><div className="daily-wrong-head"><b>{q.word}</b><span className="badge red">오답</span></div><p><span className="muted">내가 고른 답</span>　{q.chosen||"무응답"}</p><p><span className="muted">정답</span>　<strong>{q.answer}</strong></p></article>):<p>틀린 단어가 없습니다. 모두 정답이에요!</p>}<div className="daily-quiz-actions"><button className="primary" type="button" onClick={backToMain}>뒤로 가기</button></div></section>}
+  {mode==="quiz"&&currentQuestion&&<section className="daily-single-quiz">
+   <div className="daily-quiz-progress"><b>문제 {questionIndex+1} / {quiz.length}</b><span className="muted">영어 단어에 알맞은 뜻을 선택하세요. 선택하면 다음 문제로 이동합니다.</span></div>
+   <div className="card daily-single-question"><div className="daily-single-word">{currentQuestion.word}</div><div className="daily-single-options">{currentQuestion.options.map((option,j)=><button className="daily-single-option" key={j} type="button" onClick={()=>chooseAnswer(option)}><span className="daily-quiz-letter">{["①","②","③","④","⑤"][j]}</span><span>{option}</span></button>)}</div><div className="daily-single-footer"><span className="muted">답을 선택하면 자동으로 넘어갑니다.</span><button className="outline small" type="button" onClick={backToMain}>뒤로 가기</button></div></div>
+   <div className="daily-progress-track"><span style={{width:((questionIndex)/quiz.length*100)+"%"}}/></div>
+  </section>}
+  {mode==="result"&&<section className="card daily-quiz-result"><div className="daily-score-label">단어 테스트 결과</div><div className="daily-score">{score}<span> / {quiz.length}</span></div><p>{score===quiz.length?"완벽해요! 모든 문제를 맞혔어요.":quiz.length+"문항 중 "+score+"개를 맞혔어요. 틀린 단어를 다시 확인해 보세요."}</p><div className="daily-quiz-actions"><button className="outline" type="button" onClick={backToMain}>뒤로 가기</button><button className="outline" type="button" onClick={()=>setMode("wrong")}>틀린 단어 보기 ({wrong.length})</button>{wrong.length>0&&<button className="primary" type="button" onClick={startWrongQuiz}>틀린 단어 재시험</button>}</div></section>}
+  {mode==="wrong"&&<section className="card daily-wrong-list"><div className="section-heading"><div><h3>틀린 단어</h3><p className="muted">틀린 단어와 정답을 확인하고 다시 시험 볼 수 있어요.</p></div><span className="badge">{wrong.length}개</span></div>{wrong.length?wrong.map(q=><article className="daily-wrong-word" key={q.index}><div className="daily-wrong-head"><b>{q.word}</b><span className="badge red">오답</span></div><p><span className="muted">내가 고른 답</span>　{q.chosen||"무응답"}</p><p><span className="muted">정답</span>　<strong>{q.answer}</strong></p></article>):<p>틀린 단어가 없습니다. 모두 정답이에요!</p>}<div className="daily-quiz-actions"><button className="outline" type="button" onClick={backToMain}>뒤로 가기</button>{wrong.length>0&&<button className="primary" type="button" onClick={startWrongQuiz}>틀린 단어 재시험</button>}</div></section>}
+  {mode==="memorize"&&currentMemory&&<section className="daily-memorize">
+   <div className="daily-quiz-progress"><b>암기 {30-memoryQueue.length} / 30</b><span className="muted">모른다고 한 단어는 한 바퀴가 끝난 뒤 다시 나와요. 남은 단어 {memoryQueue.length}개 · 이번 순환 후 재확인 {memoryRetry.length}개</span></div>
+   <div className="card daily-memory-card"><button type="button" className={"daily-memory-word"+(memoryRevealed?" revealed":"")} onClick={()=>setMemoryRevealed(true)} aria-expanded={memoryRevealed}>{currentMemory.word}<span>{memoryRevealed?"뜻 확인됨":"눌러서 뜻 보기"}</span></button>{memoryRevealed&&<div className="daily-memory-meaning">{currentMemory.meaning}</div>}{memoryRevealed&&<div className="daily-memory-actions"><button type="button" className="daily-memory-known" onClick={()=>markMemory(true)}>O　안다</button><button type="button" className="daily-memory-unknown" onClick={()=>markMemory(false)}>X　모른다</button></div>}<div className="daily-memory-hint muted">{memoryRevealed?"뜻을 확인한 뒤 안다/모른다를 선택하세요.":"영어 단어를 클릭해 뜻을 확인하세요."}</div></div>
+   <div className="daily-quiz-actions"><button className="outline" type="button" onClick={backToMain}>뒤로 가기</button></div>
+  </section>}
+  {mode==="memorizeDone"&&<section className="card daily-quiz-result"><div className="daily-complete-icon">✓</div><div className="daily-score-label">암기 완료!</div><h3>완료!</h3><p>오늘의 단어 30개를 모두 안다고 표시했어요.</p><div className="daily-quiz-actions"><button className="primary" type="button" onClick={backToMain}>뒤로 가기</button></div></section>}
  </section>
 }
