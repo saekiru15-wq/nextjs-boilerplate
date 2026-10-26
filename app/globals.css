@@ -198,3 +198,9 @@ input:focus,textarea:focus,select:focus{border-color:#111!important;outline:2px 
 .nav button.active .nav-icon{color:#111827!important}
 .dark .nav button.active{background:#374151!important;color:#f9fafb!important;border-color:#4b5563!important}
 .dark .nav button.active .nav-icon{color:#f9fafb!important}
+
+/* DAILY-MEMORY-KNOWN-LABEL-FIX-v2 */
+.daily-memory-actions button.daily-memory-known{display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;background:#e5e7eb!important;color:#111827!important;-webkit-text-fill-color:#111827!important;border:1px solid #9ca3af!important;opacity:1!important;visibility:visible!important;font-size:17px!important;font-weight:800!important;text-indent:0!important;line-height:1.5!important}
+.daily-memory-actions button.daily-memory-known::before{content:"O";display:inline-block!important;color:#111827!important;-webkit-text-fill-color:#111827!important}
+.dark .daily-memory-actions button.daily-memory-known{background:#4b5563!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+.dark .daily-memory-actions button.daily-memory-known::before{color:#fff!important;-webkit-text-fill-color:#fff!important}
