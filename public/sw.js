@@ -1,4 +1,4 @@
-const CACHE_NAME = "learning-mentoring-static-v1";
+const CACHE_NAME = "learning-mentoring-static-v2";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {
