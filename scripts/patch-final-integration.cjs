@@ -3,6 +3,15 @@ const page=path.join(process.cwd(),"app","page.tsx");
 const cssFile=path.join(process.cwd(),"app","globals.css");
 let s=fs.readFileSync(page,"utf8");
 
+// Keep the obsolete overdue-homework entry out of the visible navigation.
+// This runs late in the build pipeline, after legacy page patches.
+s=s.replace(/const MENU = \\[([^;]+)\\];/, (whole, items) => {
+  const cleaned = items.split(",").filter(item => !/밀린\\s*숙제|overdue/i.test(item)).join(",");
+  return "const MENU = [" + cleaned + "];";
+});
+s=s.replace(/\\{active===["']📌 밀린 숙제["'][\\s\\S]*?(?=\\s*\\{active===|$)/g, "");
+
+
 /* FINAL-INTEGRATION-v1: restore the requested functional set after legacy build patches. */
 if(!s.includes("FINAL-INTEGRATION-v1")){
   if(!s.includes("const FINAL_SUBJECTS")){
