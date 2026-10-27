@@ -5,7 +5,7 @@ let s=fs.readFileSync(page,"utf8");
 
 // Remove the obsolete overdue-homework entry from the menu, regardless of icon or position.
 s=s.replace(/const MENU\s*=\s*\[([\s\S]*?)\];/, (whole, items) => {
-  const cleaned = items.split(",").filter(item => !/밀린\s*숙제|overdue/i.test(item)).join(",");
+  const cleaned = items.split(",").filter(item => !/밀린\s*숙제|overdue|캘린더|calendar/i.test(item)).join(",");
   return "const MENU = [" + cleaned + "];";
 });
 
@@ -94,6 +94,18 @@ if(!s.includes("FINAL-INTEGRATION-v1")){
   if(s.includes(notifHead)&&!s.includes("notification-delete-all")){
     s=s.replace(notifHead,'<div className="section-title"><h2>알림</h2><div className="notification-actions"><button className="outline" onClick={()=>action("app_mark_notifications_read",{p_ids:notifications.map((n:any)=>Number(n.id))})}>모두 읽음</button><button className="outline notification-delete-all" onClick={async()=>{if(await showConfirm("알림 삭제","받은 알림을 모두 삭제할까요?"))await action("app_delete_all_notifications")}}>전체 삭제</button></div></div>');
   }
+  // Remove calendar navigation and page, plus the home due-task panels.
+  s=s.replace('<TodaySchedule tasks={assignedTasks} me={me} users={users}/>', "");
+  const upNextStart=s.indexOf('<section className="card"><div className="section-title"><div><div className="eyebrow">UP NEXT</div>');
+  const progressStart=upNextStart>=0?s.indexOf('<ProgressStat',upNextStart):-1;
+  if(upNextStart>=0&&progressStart>upNextStart)s=s.slice(0,upNextStart)+s.slice(progressStart);
+  s=s.replace('{active==="📅 캘린더"&&<Calendar month={month} setMonth={setMonth} events={calendar} users={users} setActive={setActive}/>}', "");
+  const calStart=s.indexOf('function Calendar('),chatStart=calStart>=0?s.indexOf('\nfunction Chat(',calStart):-1;
+  if(calStart>=0&&chatStart>calStart)s=s.slice(0,calStart)+s.slice(chatStart+1);
+  const todayStart=s.indexOf('function TodaySchedule('),progressFn=s.indexOf('\nfunction ProgressStat(',todayStart);
+  if(todayStart>=0&&progressFn>todayStart)s=s.slice(0,todayStart)+s.slice(progressFn+1);
+  const fetchStart=s.lastIndexOf('useEffect(()=>{if(!auth)return;const from='),fetchEndStart=fetchStart>=0?s.indexOf('},[auth,month]);',fetchStart):-1;
+  if(fetchStart>=0&&fetchEndStart>fetchStart)s=s.slice(0,fetchStart)+s.slice(fetchEndStart+'},[auth,month]);'.length);
   fs.writeFileSync(page,s);
 }
 console.log("[final-integration] requested homework/dashboard/dark-mode/chat/subject features restored");
