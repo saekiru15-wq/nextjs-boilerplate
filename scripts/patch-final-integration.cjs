@@ -3,9 +3,8 @@ const page=path.join(process.cwd(),"app","page.tsx");
 const cssFile=path.join(process.cwd(),"app","globals.css");
 let s=fs.readFileSync(page,"utf8");
 
-// Remove the obsolete overdue-homework entry after legacy page patches.
-s=s.replace('"📌 밀린 숙제", ', "");
-s=s.replace(', "📌 밀린 숙제"', "");
+// Remove the obsolete overdue-homework entry from the menu, regardless of icon or position.
+s=s.replace(/const MENU\\s*=\\s*\\[([\\s\\S]*?)\\];/, (whole, items) => {\n  const cleaned = items.split(",").filter(item => !/밀린\\s*숙제|overdue/i.test(item)).join(",");\n  return "const MENU = [" + cleaned + "];";\n});
 
 /* FINAL-INTEGRATION-v1: restore the requested functional set after legacy build patches. */
 if(!s.includes("FINAL-INTEGRATION-v1")){
