@@ -4,7 +4,10 @@ const cssFile=path.join(process.cwd(),"app","globals.css");
 let s=fs.readFileSync(page,"utf8");
 
 // Remove the obsolete overdue-homework entry from the menu, regardless of icon or position.
-s=s.replace(/const MENU\\s*=\\s*\\[([\\s\\S]*?)\\];/, (whole, items) => {\n  const cleaned = items.split(",").filter(item => !/밀린\\s*숙제|overdue/i.test(item)).join(",");\n  return "const MENU = [" + cleaned + "];";\n});
+s=s.replace(/const MENU\s*=\s*\[([\s\S]*?)\];/, (whole, items) => {
+  const cleaned = items.split(",").filter(item => !/밀린\s*숙제|overdue/i.test(item)).join(",");
+  return "const MENU = [" + cleaned + "];";
+});
 
 /* FINAL-INTEGRATION-v1: restore the requested functional set after legacy build patches. */
 if(!s.includes("FINAL-INTEGRATION-v1")){
