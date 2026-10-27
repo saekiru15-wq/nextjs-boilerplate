@@ -12,8 +12,8 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "학습 멘토링" },
   icons: {
-    icon: [{ url: "/icons/pwa-192.svg", type: "image/svg+xml", sizes: "192x192" }],
-    apple: [{ url: "/icons/pwa-192.svg", type: "image/svg+xml", sizes: "192x192" }],
+    icon: [{ url: "/icons/pwa-192-gradient.svg", type: "image/svg+xml", sizes: "192x192" }],
+    apple: [{ url: "/icons/pwa-192-gradient.svg", type: "image/svg+xml", sizes: "192x192" }],
   },
 };
 
